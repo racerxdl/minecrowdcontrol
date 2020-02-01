@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +45,13 @@ public class MineCrowdControl {
     public void onServerStarting(FMLServerStartingEvent event) {
         Log.info("Server started. Creating Control Server");
         cs = new ControlServer(event.getServer());
+    }
+
+    @SubscribeEvent
+    public void onServerStarting(FMLServerStoppingEvent event) {
+        Log.info("Server stopping. Stopping Control Server");
+        cs.Stop();
+        cs = null;
     }
 
     @SubscribeEvent

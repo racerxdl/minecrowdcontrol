@@ -1,13 +1,14 @@
 package com.racerxdl.minecrowdcontrol;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Tools {
     public final static int NIGHT = 13000;
-    public final static int MIDNIGHT = 18000;
     public final static int DAY = 1000;
+
+    public final static int MAX_HEALTH = 20;
+    public final static int MAX_FOOD = 20;
 
     public static String ReadUntilNull(InputStreamReader reader) throws IOException {
         StringBuilder sb = new StringBuilder();

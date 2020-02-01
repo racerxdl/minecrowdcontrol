@@ -39,21 +39,22 @@ public class ControlServer {
     World world;
     PlayerEntity player;
     boolean started;
-    boolean enablePlayerMessages;
     AtomicBoolean running;
 
     public ControlServer(MinecraftServer server) {
         this.server = server;
         this.started = false;
-        this.enablePlayerMessages = true;
         this.running = new AtomicBoolean(false);
+        Commands.SetEnablePlayerMessages(true);
     }
 
     public void Start() {
-        if (!running.compareAndSet(false, true)) {
+        if (running.compareAndSet(false, true)) {
             Log.info("Starting server");
             Thread t = new Thread(this::serverLoop);
             t.start();
+        } else {
+            Log.error("Already running");
         }
     }
 
@@ -97,7 +98,7 @@ public class ControlServer {
             while (running.get()) {
                 String data = Tools.ReadUntilNull(inFromClient);
                 Log.debug("Received: " + data);
-                String result = ParseCommand(data, "");
+                String result = ParseJSON(data);
                 Log.debug("Sending: " + result);
                 byte[] tmp = result.getBytes();
                 byte[] outData = new byte[tmp.length + 1];
@@ -113,39 +114,12 @@ public class ControlServer {
         }
     }
 
-    public String ParseCommand(String command, String name) {
-        switch (command.toUpperCase()) {
-            case "KILL":
-                KillPlayers(name);
-                return "OK";
-            case "TAKE_HEART":
-                TakeHeart(name);
-                return "OK";
-            case "GIVE_HEART":
-                GiveHeart(name);
-                return "OK";
-            case "SET_FIRE":
-                SetFire(name);
-                return "OK";
-            case "SPAWN_CREEPER":
-                SpawnCreeper(name);
-                return "OK";
-            case "SET_TIME_NIGHT":
-                SetTimeNight(name);
-                return "OK";
-            case "SET_TIME_DAY":
-                SetTimeDay(name);
-                return "OK";
-            case "TAKE_FOOD":
-                TakeFood(name);
-                return "OK";
-            case "GIVE_FOOD":
-                GiveFood(name);
-                return "OK";
+    public EffectResult RunCommand(String command, String viewer) {
+        if (Commands.CommandList.get(command.toUpperCase()) != null) {
+            return Commands.CommandList.get(command.toUpperCase()).Run(player, server, viewer);
         }
 
-        // If not, try JSON commands
-        return ParseJSON(command);
+        return EffectResult.Unavailable;
     }
 
     public String ParseJSON(String data) {
@@ -157,10 +131,8 @@ public class ControlServer {
             res.message = "Test";
 
             if (req.type == RequestType.Start) {
-                String cmdResult = ParseCommand(req.code, req.viewer);
-                res.status = cmdResult.equals("OK") ? EffectResult.Success : EffectResult.Unavailable;
-                Log.info("Effect Result: " + cmdResult);
-                res.message = "Effect " + req.code + " started.";
+                res.status = RunCommand(req.code, req.viewer);
+                res.message = "Effect " + req.code + ": " + res.status;
             }
 
             return res.ToJSON();
@@ -169,99 +141,4 @@ public class ControlServer {
             return res.ToJSON();
         }
     }
-
-    public void RunOnPlayers(PlayerRunnable runnable) {
-        List<ServerPlayerEntity> players = server.getPlayerList().getPlayers();
-        for (PlayerEntity player : players) {
-            runnable.run(player);
-        }
-    }
-
-    public void SendPlayerMessage(String msg) {
-        if (enablePlayerMessages) {
-            player.sendStatusMessage(new StringTextComponent(msg), false);
-        }
-    }
-
-    public void SendPlayerMessage(String msg, Object... params) {
-        if (enablePlayerMessages) {
-            player.sendStatusMessage(new StringTextComponent(MessageFormat.format(msg, params)), false);
-        }
-    }
-
-    // region Commands
-    public void SetTimeNight(String viewer) {
-        Log.info(Messages.ServerSetTimeNight, viewer);
-        SendPlayerMessage(Messages.ClientSetTimeNight, viewer);
-        world.setDayTime(Tools.NIGHT);
-    }
-
-    public void SetTimeDay(String viewer) {
-        Log.info(Messages.ServerSetTimeDay, viewer);
-        SendPlayerMessage(Messages.ClientSetTimeDay, viewer);
-        world.setDayTime(Tools.DAY);
-    }
-
-    public void SpawnCreeper(String viewer) {
-        BlockPos pos = player.getPosition();
-        Log.info(Messages.ServerSpawnCreeper, viewer);
-        SendPlayerMessage(Messages.ClientSpawnCreeper, viewer);
-
-        Entity e = EntityType.CREEPER.create(world);
-        e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
-
-        world.addEntity(e);
-    }
-
-    public void TakeFood(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerTakeFood, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientTakeFood, viewer);
-            FoodStats fs = player.getFoodStats();
-            fs.setFoodLevel(fs.getFoodLevel() - 2);
-        }));
-    }
-
-    public void GiveFood(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerGiveFood, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientGiveFood, viewer);
-            FoodStats fs = player.getFoodStats();
-            fs.setFoodLevel(fs.getFoodLevel() + 2);
-        }));
-    }
-
-
-    public void TakeHeart(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerTakeHeart, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientTakeHeart, viewer);
-            player.setHealth(player.getHealth() - 2);
-        }));
-    }
-
-    public void GiveHeart(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerGiveHeart, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientGiveHeart, viewer);
-            player.setHealth(player.getHealth() + 2);
-        }));
-    }
-
-    public void SetFire(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerSetFire, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientSetFire, viewer);
-            player.setFire(5);
-        }));
-    }
-
-    public void KillPlayers(String viewer) {
-        RunOnPlayers((player -> {
-            Log.info(Messages.ServerKill, viewer, player.getName().getString());
-            SendPlayerMessage(Messages.ClientKill, viewer);
-            player.setHealth(0);
-        }));
-    }
-    // endregion
 }

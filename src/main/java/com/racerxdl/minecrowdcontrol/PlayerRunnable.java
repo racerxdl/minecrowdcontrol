@@ -5,5 +5,5 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 
 @FunctionalInterface
 public interface PlayerRunnable {
-    void run(PlayerEntity player);
+    boolean run(PlayerEntity player);
 }
