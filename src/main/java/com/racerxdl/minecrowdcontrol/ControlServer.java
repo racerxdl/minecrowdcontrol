@@ -1,5 +1,10 @@
 package com.racerxdl.minecrowdcontrol;
 
+import com.google.gson.JsonSyntaxException;
+import com.racerxdl.minecrowdcontrol.CrowdControl.EffectResult;
+import com.racerxdl.minecrowdcontrol.CrowdControl.Request;
+import com.racerxdl.minecrowdcontrol.CrowdControl.RequestType;
+import com.racerxdl.minecrowdcontrol.CrowdControl.Response;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.monster.CreeperEntity;
@@ -23,28 +28,37 @@ import java.io.InputStreamReader;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ControlServer {
     private static final Logger Log = LogManager.getLogger();
 
     MinecraftServer server;
-    ServerSocket socket;
     World world;
     PlayerEntity player;
+    boolean started;
+    boolean enablePlayerMessages;
+    AtomicBoolean running;
 
     public ControlServer(MinecraftServer server) {
         this.server = server;
+        this.started = false;
+        this.enablePlayerMessages = true;
+        this.running = new AtomicBoolean(false);
     }
 
-    public void Start() throws Exception {
-        socket = new ServerSocket(6789);
-        Thread t = new Thread(this::serverLoop);
-        t.start();
+    public void Start() {
+        if (!running.compareAndSet(false, true)) {
+            Log.info("Starting server");
+            Thread t = new Thread(this::serverLoop);
+            t.start();
+        }
     }
 
-    public void Stop() throws Exception {
-        socket.close();
+    public void Stop() {
+        running.set(false);
     }
 
     public void SetWorld(World world) {
@@ -61,79 +75,99 @@ public class ControlServer {
     }
 
     private void serverLoop() {
-        try {
-            Log.info("Server listening on port 6789");
-            while (true) {
-                Log.info("Waiting for connection");
-                Socket connectionSocket = socket.accept();
-                Log.info("Got connection from " + connectionSocket.getRemoteSocketAddress().toString());
-                Thread t = new Thread(() -> clientLoop(connectionSocket));
-                t.start();
+        Log.info("Server loop started");
+        while (running.get()) {
+            try {
+                Log.info("Trying to connect to Crowd Control");
+                Socket s = new Socket("localhost", 58430);
+                Log.info("Connected to crowd control!");
+                clientLoop(s);
+                Log.info("Disconnected from crowd control");
+            } catch (Exception e) {
+                Log.error("Socket error: " + e.getMessage());
             }
-        } catch (Exception e) {
-            Log.error("Socket error: " + e.getMessage());
         }
+        Log.info("Server loop ended");
     }
 
     public void clientLoop(Socket client) {
         try {
-            BufferedReader inFromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            InputStreamReader inFromClient = new InputStreamReader(client.getInputStream());
             DataOutputStream outToClient = new DataOutputStream(client.getOutputStream());
-            while (true) {
-                String clientSentence = inFromClient.readLine();
-                Log.info("Received: " + clientSentence);
-                String result = ParseCommand(clientSentence);
-                outToClient.writeBytes(result + "\n");
+            while (running.get()) {
+                String data = Tools.ReadUntilNull(inFromClient);
+                Log.debug("Received: " + data);
+                String result = ParseCommand(data, "");
+                Log.debug("Sending: " + result);
+                byte[] tmp = result.getBytes();
+                byte[] outData = new byte[tmp.length + 1];
+
+                System.arraycopy(tmp, 0, outData, 0, tmp.length);
+
+                outData[outData.length - 1] = 0x00;
+
+                outToClient.write(outData);
             }
         } catch (Exception e) {
             Log.error("Error handling client data: " + e.getMessage());
         }
     }
 
-    public String ParseCommand(String command) {
-        command = command.toUpperCase();
-
-        switch (command) {
+    public String ParseCommand(String command, String name) {
+        switch (command.toUpperCase()) {
             case "KILL":
-                KillPlayers();
+                KillPlayers(name);
                 return "OK";
             case "TAKE_HEART":
-                TakeHeart();
+                TakeHeart(name);
                 return "OK";
             case "GIVE_HEART":
-                GiveHeart();
+                GiveHeart(name);
                 return "OK";
             case "SET_FIRE":
-                SetFire();
+                SetFire(name);
                 return "OK";
             case "SPAWN_CREEPER":
-                SpawnCreeper();
+                SpawnCreeper(name);
                 return "OK";
             case "SET_TIME_NIGHT":
-                SetTimeNight();
+                SetTimeNight(name);
                 return "OK";
             case "SET_TIME_DAY":
-                SetTimeDay();
+                SetTimeDay(name);
                 return "OK";
             case "TAKE_FOOD":
-                TakeFood();
+                TakeFood(name);
                 return "OK";
             case "GIVE_FOOD":
-                GiveFood();
+                GiveFood(name);
                 return "OK";
         }
 
-        return "Invalid Command";
+        // If not, try JSON commands
+        return ParseJSON(command);
     }
 
-    public void SetTimeNight() {
-        SendPlayerMessage("The night is now!");
-        world.setDayTime(Tools.NIGHT);
-    }
+    public String ParseJSON(String data) {
+        Response res = new Response();
+        try {
+            Request req = Request.FromJSON(data);
+            res.id = req.id;
+            res.status = EffectResult.Success;
+            res.message = "Test";
 
-    public void SetTimeDay() {
-        SendPlayerMessage("The day is now!");
-        world.setDayTime(Tools.DAY);
+            if (req.type == RequestType.Start) {
+                String cmdResult = ParseCommand(req.code, req.viewer);
+                res.status = cmdResult.equals("OK") ? EffectResult.Success : EffectResult.Unavailable;
+                Log.info("Effect Result: " + cmdResult);
+                res.message = "Effect " + req.code + " started.";
+            }
+
+            return res.ToJSON();
+        } catch (JsonSyntaxException e) {
+            res.message = e.getMessage();
+            return res.ToJSON();
+        }
     }
 
     public void RunOnPlayers(PlayerRunnable runnable) {
@@ -143,10 +177,35 @@ public class ControlServer {
         }
     }
 
-    public void SpawnCreeper() {
+    public void SendPlayerMessage(String msg) {
+        if (enablePlayerMessages) {
+            player.sendStatusMessage(new StringTextComponent(msg), false);
+        }
+    }
+
+    public void SendPlayerMessage(String msg, Object... params) {
+        if (enablePlayerMessages) {
+            player.sendStatusMessage(new StringTextComponent(MessageFormat.format(msg, params)), false);
+        }
+    }
+
+    // region Commands
+    public void SetTimeNight(String viewer) {
+        Log.info(Messages.ServerSetTimeNight, viewer);
+        SendPlayerMessage(Messages.ClientSetTimeNight, viewer);
+        world.setDayTime(Tools.NIGHT);
+    }
+
+    public void SetTimeDay(String viewer) {
+        Log.info(Messages.ServerSetTimeDay, viewer);
+        SendPlayerMessage(Messages.ClientSetTimeDay, viewer);
+        world.setDayTime(Tools.DAY);
+    }
+
+    public void SpawnCreeper(String viewer) {
         BlockPos pos = player.getPosition();
-        Log.info("Spawining Creeper!! " + pos.toString());
-        SendPlayerMessage(TextFormatting.RED + "Spawining creeper!");
+        Log.info(Messages.ServerSpawnCreeper, viewer);
+        SendPlayerMessage(Messages.ClientSpawnCreeper, viewer);
 
         Entity e = EntityType.CREEPER.create(world);
         e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
@@ -154,58 +213,55 @@ public class ControlServer {
         world.addEntity(e);
     }
 
-    public void SendPlayerMessage(String msg) {
-        player.sendStatusMessage(new StringTextComponent(msg), false);
-    }
-
-    public void TakeFood() {
+    public void TakeFood(String viewer) {
         RunOnPlayers((player -> {
-            Log.info("Taking one food from " + player.getName().getString());
-            SendPlayerMessage(TextFormatting.RED + "Taking food");
+            Log.info(Messages.ServerTakeFood, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientTakeFood, viewer);
             FoodStats fs = player.getFoodStats();
             fs.setFoodLevel(fs.getFoodLevel() - 2);
         }));
     }
 
-    public void GiveFood() {
+    public void GiveFood(String viewer) {
         RunOnPlayers((player -> {
-            Log.info("Giving one food from " + player.getName().getString());
-            SendPlayerMessage(TextFormatting.GREEN + "Giving food");
+            Log.info(Messages.ServerGiveFood, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientGiveFood, viewer);
             FoodStats fs = player.getFoodStats();
             fs.setFoodLevel(fs.getFoodLevel() + 2);
         }));
     }
 
 
-    public void TakeHeart() {
+    public void TakeHeart(String viewer) {
         RunOnPlayers((player -> {
-            Log.info("Taking one heart from " + player.getName().getString());
-            SendPlayerMessage(TextFormatting.RED + "Taking one heart");
+            Log.info(Messages.ServerTakeHeart, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientTakeHeart, viewer);
             player.setHealth(player.getHealth() - 2);
         }));
     }
 
-    public void GiveHeart() {
+    public void GiveHeart(String viewer) {
         RunOnPlayers((player -> {
-            Log.info("Giving one heart from " + player.getName().getString());
-            SendPlayerMessage(TextFormatting.GREEN + "Giving one heart");
+            Log.info(Messages.ServerGiveHeart, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientGiveHeart, viewer);
             player.setHealth(player.getHealth() + 2);
         }));
     }
 
-    public void SetFire() {
+    public void SetFire(String viewer) {
         RunOnPlayers((player -> {
-            SendPlayerMessage(TextFormatting.RED + "Setting fire on you");
-            Log.info("Setting fire on " + player.getName().getString());
+            Log.info(Messages.ServerSetFire, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientSetFire, viewer);
             player.setFire(5);
         }));
     }
 
-    public void KillPlayers() {
+    public void KillPlayers(String viewer) {
         RunOnPlayers((player -> {
-            SendPlayerMessage(TextFormatting.RED + "Killing you");
-            Log.info("Killing " + player.getName().getString());
+            Log.info(Messages.ServerKill, viewer, player.getName().getString());
+            SendPlayerMessage(Messages.ClientKill, viewer);
             player.setHealth(0);
         }));
     }
+    // endregion
 }
