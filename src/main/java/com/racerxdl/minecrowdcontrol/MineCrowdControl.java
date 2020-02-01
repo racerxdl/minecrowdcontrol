@@ -2,12 +2,17 @@ package com.racerxdl.minecrowdcontrol;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
@@ -19,6 +24,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.Timer;
@@ -34,13 +40,11 @@ public class MineCrowdControl {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
 
+    private ControlServer cs;
+
     public MineCrowdControl() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        // Register the enqueueIMC method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
-        // Register the processIMC method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
 
@@ -59,47 +63,52 @@ public class MineCrowdControl {
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
     }
 
-    private void enqueueIMC(final InterModEnqueueEvent event) {
-        // some example code to dispatch IMC to another mod
-        InterModComms.sendTo("examplemod", "helloworld", () -> {
-            LOGGER.info("Hello world from the MDK");
-            return "Hello world";
-        });
-    }
-
-    private void processIMC(final InterModProcessEvent event) {
-        // some example code to receive and process InterModComms from other mods
-        LOGGER.info("Got IMC {}", event.getIMCStream().
-                map(m -> m.getMessageSupplier().get()).
-                collect(Collectors.toList()));
-    }
-
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event) {
         // do something when the server starts
         LOGGER.info("HELLO from server starting");
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-        executorService.schedule((Runnable) () -> {
-            LOGGER.info("Executing Kill Task");
-            List<ServerPlayerEntity> players = event.getServer().getPlayerList().getPlayers();
-            for (PlayerEntity player : players) {
-                LOGGER.info("Killing " + player.getName().getString());
-                player.setHealth(0);
-            }
-        }, 10000, TimeUnit.MILLISECONDS);
+        cs = new ControlServer(event.getServer());
+
+        try {
+            cs.Start();
+        } catch (Exception e) {
+            Log.error("Cannot start server: " + e.getLocalizedMessage());
+        }
+
+//        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+//
+//        executorService.schedule((Runnable) () -> {
+//            LOGGER.info("Executing Kill Task");
+//            cs.KillPlayers();
+//        }, 10000, TimeUnit.MILLISECONDS);
 
     }
 
-    // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD
-    // Event bus for receiving Registry Events)
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class RegistryEvents {
-        @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            // register a new block here
-            LOGGER.info("HELLO from Register Block");
+//    @SubscribeEvent
+//    public void sendAlert(EntityJoinWorldEvent event) {
+//        if (!(event.getEntity() instanceof CreeperEntity)) {
+//            return;
+//        }
+//
+//        List players = event.getEntity().world.getPlayers();
+//
+//        for (int i = 0; i < players.size(); i++) {
+//            PlayerEntity player = (PlayerEntity) players.get(i);
+//            if (event.getWorld().isRemote) {
+//                player.sendStatusMessage(new StringTextComponent(TextFormatting.GREEN + "A creeper has spawned!"), false);
+//            }
+//        }
+//    }
+
+    @SubscribeEvent
+    public void onWorldEntry(EntityJoinWorldEvent event){
+        if(event.getEntity() instanceof PlayerEntity){
+            LOGGER.info("Got World!");
+            cs.SetWorld(event.getWorld());
+            cs.SetPlayer((PlayerEntity)event.getEntity());
         }
     }
+
 }
