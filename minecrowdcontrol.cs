@@ -30,7 +30,11 @@ public class Minecraft : SimpleTCPPack
         new Effect("Fill all hearts", "fill_hearts"),
         new Effect("Spawn Enderman", "spawn_enderman"),
         new Effect("Spawn Enderdragon", "spawn_enderdragon"),
-		new Effect("Invert Mouse", "invert_mouse"),
-		new Effect("Disable Jump", "disable_jump"),
+		new Effect("Invert Mouse (2 minutes)", "invert_mouse"),
+		new Effect("Disable Jump (1 minute)", "disable_jump"),
+		new Effect("Make it hungry", "take_all_food"),
+		new Effect("Food blessing", "fill_food"),
+		new Effect("Make it rain (1 minute)", "make_it_rain"),
+		new Effect("Gotta go fast (1 minute)", "gotta_go_fast"),
     };
 }

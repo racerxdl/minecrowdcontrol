@@ -15,6 +15,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ControlServer {
@@ -105,11 +108,28 @@ public class ControlServer {
     }
 
     public CommandResult RunCommand(String command, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(GetStates()).SetEffectResult(EffectResult.Unavailable);
+
         if (Commands.CommandList.get(command.toUpperCase()) != null) {
-            return Commands.CommandList.get(command.toUpperCase()).Run(GetStates(), player, client, server, viewer, type);
+            res = Commands.CommandList.get(command.toUpperCase()).Run(GetStates(), player, client, server, viewer, type);
+        } else {
+            Log.error("Command {} not found", command);
         }
 
-        return new CommandResult(GetStates()).SetEffectResult(EffectResult.Unavailable);
+        SetStates(res.GetPlayerStates());
+
+        return res;
+    }
+
+    public void ScheduleCommand(String cmd, int seconds) {
+        Log.info("Scheduling cmd {} STOP after {} seconds", cmd, seconds);
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+        executorService.schedule(() -> {
+            Log.info("Running STOP for {}", cmd);
+            CommandResult res = RunCommand(cmd, "server", RequestType.Stop);
+            Log.info("Run result: {}", res.GetEffectResult());
+        }, seconds, TimeUnit.SECONDS);
     }
 
     public String ParseJSON(String data) {
@@ -119,8 +139,13 @@ public class ControlServer {
             res.id = req.id;
             CommandResult cmdRes = RunCommand(req.code, req.viewer, req.type);
             res.status = cmdRes.GetEffectResult();
-            SetStates(cmdRes.GetPlayerStates());
             res.message = "Effect " + req.code + ": " + res.status;
+
+            int sendStopAfter = Timings.GetStopTiming(req.code);
+
+            if (res.status == EffectResult.Success && sendStopAfter > 0) {
+                ScheduleCommand(req.code, sendStopAfter);
+            }
 
             return res.ToJSON();
         } catch (JsonSyntaxException e) {

@@ -13,6 +13,7 @@ import net.minecraft.util.FoodStats;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,6 +44,10 @@ public class Commands {
         put("SPAWN_ENDERDRAGON", Commands::SpawnEnderdragon);
         put("INVERT_MOUSE", Commands::SetInvertMouse);
         put("DISABLE_JUMP", Commands::SetJumpDisabled);
+        put("TAKE_ALL_FOOD", Commands::TakeAllFood);
+        put("FILL_FOOD", Commands::FillFood);
+        put("MAKE_IT_RAIN", Commands::SetRaining);
+        put("GOTTA_GO_FAST", Commands::GottaGoFast);
     }};
 
     public static void SetEnablePlayerMessages(boolean status) {
@@ -65,6 +70,87 @@ public class Commands {
         }
     }
 
+    public static CommandResult GottaGoFast(PlayerStates states, PlayerEntity unused, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        boolean result = RunOnPlayers(server, (player) -> {
+            World w = player.getEntityWorld();
+            if (type == RequestType.Start) {
+                if (states.getGottaGoFast()) {
+                    return false;
+                }
+                Log.info(Messages.ServerGottaGoFast, viewer);
+                SendPlayerMessage(player, Messages.ClientGottaGoFast, viewer);
+
+                player.abilities.setWalkSpeed(1F);
+                player.abilities.setFlySpeed(0.5F);
+
+                return true;
+            } else if (type == RequestType.Stop) {
+                if (!states.getGottaGoFast()) {
+                    return false;
+                }
+
+                Log.info(Messages.ServerGottaGoFastRestored);
+                SendPlayerMessage(player, Messages.ClientGottaGoFastRestored);
+
+                player.abilities.setWalkSpeed(0.1F);
+                player.abilities.setFlySpeed(0.05F);
+
+                return true;
+            }
+
+            return true;
+        });
+
+        if (result) {
+            res = res.SetNewStates(res.GetPlayerStates().setGottaGoFast(type == RequestType.Start));
+        }
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult SetRaining(PlayerStates states, PlayerEntity unused, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        boolean result = RunOnPlayers(server, (player) -> {
+            World w = player.getEntityWorld();
+            if (type == RequestType.Start) {
+                if (w.getWorldInfo().isRaining()) {
+                    return false;
+                }
+
+                Biome b = w.getBiome(player.getPosition());
+
+                if (b.getPrecipitation() == Biome.RainType.NONE) {
+                    return false;
+                }
+
+                Log.info(Messages.ServerMakeItRain, viewer);
+                SendPlayerMessage(player, Messages.ClientMakeItRain, viewer);
+
+                w.getWorldInfo().setRaining(true);
+
+                return true;
+            } else if (type == RequestType.Stop) {
+                if (!w.getWorldInfo().isRaining()) {
+                    return false;
+                }
+
+                Log.info(Messages.ServerRainRestored);
+                SendPlayerMessage(player, Messages.ClientRainRestored);
+
+                w.getWorldInfo().setRaining(false);
+
+                return true;
+            }
+
+            return true;
+        });
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
     public static CommandResult SetInvertMouse(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer unused2, String viewer, RequestType type) {
         CommandResult res = new CommandResult(states);
 
@@ -76,19 +162,19 @@ public class Commands {
             Log.info(Messages.ServerInvertMouse, viewer, player.getName().getString());
             SendPlayerMessage(player, Messages.ClientInvertMouse, viewer);
             AbstractOption.INVERT_MOUSE.set(client.gameSettings, "true");
-            return  res.SetEffectResult(EffectResult.Success);
+            return res.SetEffectResult(EffectResult.Success);
         } else if (type == RequestType.Stop) {
             if (!client.gameSettings.invertMouse) {
-                return  res.SetEffectResult(EffectResult.Retry);
+                return res.SetEffectResult(EffectResult.Retry);
             }
 
             Log.info(Messages.ServerRestoreInvertMouse, player.getName().getString());
             SendPlayerMessage(player, Messages.ClientRestoreInvertMouse);
             AbstractOption.INVERT_MOUSE.set(client.gameSettings, "false");
-            return  res.SetEffectResult(EffectResult.Success);
+            return res.SetEffectResult(EffectResult.Success);
         }
 
-        return  res.SetEffectResult(EffectResult.Success);
+        return res.SetEffectResult(EffectResult.Success);
     }
 
     public static CommandResult SetJumpDisabled(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer unused2, String viewer, RequestType type) {
@@ -99,8 +185,8 @@ public class Commands {
                 return res.SetEffectResult(EffectResult.Retry);
             }
 
-//            Log.info(Messages.ServerInvertMouse, viewer, player.getName().getString());
-//            SendPlayerMessage(player, Messages.ClientInvertMouse, viewer);
+            Log.info(Messages.ServerJumpDisabled, viewer, player.getName().getString());
+            SendPlayerMessage(player, Messages.ClientJumpDisabled, viewer);
             return res
                     .SetEffectResult(EffectResult.Success)
                     .SetNewStates(res.GetPlayerStates().setJumpDisabled(true));
@@ -109,8 +195,8 @@ public class Commands {
                 return res.SetEffectResult(EffectResult.Retry);
             }
 
-//            Log.info(Messages.ServerRestoreInvertMouse, player.getName().getString());
-//            SendPlayerMessage(player, Messages.ClientRestoreInvertMouse);
+            Log.info(Messages.ServerJumpRestored, player.getName().getString());
+            SendPlayerMessage(player, Messages.ClientJumpRestored);
             return res
                     .SetEffectResult(EffectResult.Success)
                     .SetNewStates(res.GetPlayerStates().setJumpDisabled(false));
@@ -131,6 +217,7 @@ public class Commands {
         }
 
         World world = player.getEntityWorld();
+
         if (world.getDayTime() < 13000 || world.getDayTime() > 23000) {
             Log.info(Messages.ServerSetTimeNight, viewer);
             // Send message to all players
@@ -330,7 +417,7 @@ public class Commands {
             return false;
         }));
 
-        return result ? res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult TakeAllHeartsButHalf(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -356,7 +443,61 @@ public class Commands {
             return false;
         }));
 
-        return result ? res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult TakeAllFood(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player -> {
+            FoodStats fs = player.getFoodStats();
+            if (fs.getFoodLevel() > 0) {
+                Log.info(Messages.ServerTakeAllFood, viewer, player.getName().getString());
+                SendPlayerMessage(player, Messages.ClientTakeAllFood, viewer);
+                player.getFoodStats().setFoodLevel(0);
+
+                return true;
+            }
+
+            return false;
+        }));
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult FillFood(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player -> {
+            FoodStats fs = player.getFoodStats();
+            if (fs.getFoodLevel() < Tools.MAX_FOOD) {
+                Log.info(Messages.ServerFillFood, viewer, player.getName().getString());
+                SendPlayerMessage(player, Messages.ClientFillFood, viewer);
+                player.getFoodStats().setFoodLevel(Tools.MAX_FOOD);
+
+                return true;
+            }
+
+            return false;
+        }));
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult FillHearts(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -382,7 +523,7 @@ public class Commands {
             return false;
         }));
 
-        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult TakeHeart(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -408,7 +549,7 @@ public class Commands {
             return false;
         }));
 
-        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult GiveHeart(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -433,7 +574,7 @@ public class Commands {
             return false;
         }));
 
-        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult SetFire(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -458,7 +599,7 @@ public class Commands {
             return false;
         }));
 
-        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
     public static CommandResult KillPlayers(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
@@ -484,6 +625,6 @@ public class Commands {
             return false;
         }));
 
-        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Unavailable);
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Unavailable);
     }
 }

@@ -2,6 +2,8 @@ package com.racerxdl.minecrowdcontrol;
 
 import net.minecraft.util.text.TextFormatting;
 
+import javax.xml.soap.Text;
+
 public class Messages {
 
     // region Server Messages
@@ -19,6 +21,14 @@ public class Messages {
     public static final String ServerSpawn = "Viewer {} just spawned a {}";
     public static final String ServerInvertMouse = "Viewer {} just inverted {} mouse";
     public static final String ServerRestoreInvertMouse = "{} mouse inversion restored";
+    public static final String ServerTakeAllFood = "Viewer {} took all {} food";
+    public static final String ServerFillFood = "Viewer {} filled {} food";
+    public static final String ServerJumpDisabled = "Viewer {} just disabled {} jump";
+    public static final String ServerJumpRestored = "{} jump has been restored";
+    public static final String ServerMakeItRain = "Viewer {} just made it rain";
+    public static final String ServerRainRestored = "Rain just stopped";
+    public static final String ServerGottaGoFast = "Viewer {} just made it fast";
+    public static final String ServerGottaGoFastRestored = "Speed are now normal";
     // endregion
 
     // region Client Messages
@@ -36,5 +46,13 @@ public class Messages {
     public static final String ClientSpawn = TextFormatting.RED + "Viewer {0} just spawn a {1}";
     public static final String ClientInvertMouse = TextFormatting.RED + "Viewer {0} just inverted your mouse";
     public static final String ClientRestoreInvertMouse = TextFormatting.GREEN + "Your mouse inversion has been restored";
+    public static final String ClientTakeAllFood = TextFormatting.RED + "Viewer {0} just took all your food. Now you're hungry!";
+    public static final String ClientFillFood = TextFormatting.GREEN + "Viewer {0} just filled all your hunger";
+    public static final String ClientJumpDisabled = TextFormatting.RED + "Viewer {0} just disabled your jump";
+    public static final String ClientJumpRestored = TextFormatting.GREEN + "Your jump has been restored";
+    public static final String ClientMakeItRain = TextFormatting.GOLD + "Viewer {0} just made it rain";
+    public static final String ClientRainRestored = TextFormatting.GOLD + "Rain just stopped";
+    public static final String ClientGottaGoFast = "Viewer {0} just made it FAST";
+    public static final String ClientGottaGoFastRestored = "Speed are now normal";
     // endregion
 }
