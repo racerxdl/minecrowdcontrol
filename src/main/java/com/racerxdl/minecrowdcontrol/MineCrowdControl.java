@@ -67,7 +67,7 @@ public class MineCrowdControl {
         cs = null;
     }
 
-    @SubscribeEvent(priority= EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onJump(LivingEvent.LivingJumpEvent event) {
         if (cs.GetStates().getJumpDisabled()) {
             Vec3d motion = event.getEntity().getMotion();

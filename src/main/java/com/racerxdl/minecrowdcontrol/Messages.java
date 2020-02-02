@@ -29,6 +29,8 @@ public class Messages {
     public static final String ServerRainRestored = "Rain just stopped";
     public static final String ServerGottaGoFast = "Viewer {} just made it fast";
     public static final String ServerGottaGoFastRestored = "Speed are now normal";
+    public static final String ServerDrunkModeStarted = "Viewer {} just made game drunk";
+    public static final String ServerDrunkModeRestored = "Game is not drunk anymore";
     // endregion
 
     // region Client Messages
@@ -52,7 +54,9 @@ public class Messages {
     public static final String ClientJumpRestored = TextFormatting.GREEN + "Your jump has been restored";
     public static final String ClientMakeItRain = TextFormatting.GOLD + "Viewer {0} just made it rain";
     public static final String ClientRainRestored = TextFormatting.GOLD + "Rain just stopped";
-    public static final String ClientGottaGoFast = "Viewer {0} just made it FAST";
+    public static final String ClientGottaGoFast = TextFormatting.YELLOW + "Viewer {0} just made it FAST";
     public static final String ClientGottaGoFastRestored = "Speed are now normal";
+    public static final String ClientDrunkModeStarted = "Viewer {0} just made game drunk";
+    public static final String ClientDrunkModeRestored = "Game is not drunk anymore";
     // endregion
 }

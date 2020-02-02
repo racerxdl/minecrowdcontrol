@@ -28,11 +28,13 @@ public class ControlServer {
     private AtomicBoolean running;
     private Minecraft client;
     private PlayerStates states;
+    private ScheduledExecutorService executorService;
 
     public ControlServer(MinecraftServer server) {
         this.server = server;
         this.running = new AtomicBoolean(false);
         this.states = new PlayerStates();
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
         Commands.SetEnablePlayerMessages(true);
     }
 
@@ -58,9 +60,33 @@ public class ControlServer {
         this.states = states.Clone();
     }
 
+    public void DrunkModeLoop() {
+        PlayerStates states = GetStates();
+        if (states.getDrunkMode()) {
+            if (client != null) {
+                if (EphemeralStates.DrunkModeFOVIncreasing) {
+                    client.gameSettings.fov += Tools.FOV_STEP;
+                    if (client.gameSettings.fov >= Tools.MAX_FOV) {
+                        EphemeralStates.DrunkModeFOVIncreasing = false;
+                    }
+                } else {
+                    client.gameSettings.fov -= Tools.FOV_STEP;
+                    if (client.gameSettings.fov <= Tools.MIN_FOV) {
+                        EphemeralStates.DrunkModeFOVIncreasing = true;
+                    }
+                }
+            }
+            executorService.schedule(this::DrunkModeLoop, Tools.DRUNK_REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
+        } else {
+            Log.info("Stopping drunk mode loop");
+            client.gameSettings.fov = GetStates().getOriginalFOV();
+        }
+    }
+
     public void SetClient(Minecraft client) {
         Log.info("Setting client!");
         this.client = client;
+        SetStates(GetStates().setOriginalFOV(client.gameSettings.fov));
     }
 
     public void SetPlayer(PlayerEntity player) {
@@ -123,8 +149,6 @@ public class ControlServer {
 
     public void ScheduleCommand(String cmd, int seconds) {
         Log.info("Scheduling cmd {} STOP after {} seconds", cmd, seconds);
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
         executorService.schedule(() -> {
             Log.info("Running STOP for {}", cmd);
             CommandResult res = RunCommand(cmd, "server", RequestType.Stop);
@@ -145,6 +169,12 @@ public class ControlServer {
 
             if (res.status == EffectResult.Success && sendStopAfter > 0) {
                 ScheduleCommand(req.code, sendStopAfter);
+            }
+
+            if (req.type == RequestType.Start && res.status == EffectResult.Success && req.code.toUpperCase().equals("DRUNK_MODE")) {
+                Log.info("Starting drunk mode loop");
+                SetStates(GetStates().setOriginalFOV(client.gameSettings.fov));
+                DrunkModeLoop();
             }
 
             return res.ToJSON();

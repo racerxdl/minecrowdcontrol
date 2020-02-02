@@ -27,6 +27,7 @@ public class Timings {
         put("FILL_FOOD", NO_STOP);
         put("MAKE_IT_RAIN", 60);
         put("GOTTA_GO_FAST", 60);
+        put("DRUNK_MODE", 60);
     }};
 
     public static int GetStopTiming(String cmd) {

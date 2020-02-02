@@ -48,6 +48,7 @@ public class Commands {
         put("FILL_FOOD", Commands::FillFood);
         put("MAKE_IT_RAIN", Commands::SetRaining);
         put("GOTTA_GO_FAST", Commands::GottaGoFast);
+        put("DRUNK_MODE", Commands::DrunkMode);
     }};
 
     public static void SetEnablePlayerMessages(boolean status) {
@@ -68,6 +69,36 @@ public class Commands {
         if (enablePlayerMessages) {
             player.sendStatusMessage(new StringTextComponent(MessageFormat.format(msg, params)), false);
         }
+    }
+
+    public static CommandResult DrunkMode(PlayerStates states, PlayerEntity player, Minecraft unused, MinecraftServer unused2, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Start) {
+            if (states.getDrunkMode()) {
+                return res.SetEffectResult(EffectResult.Retry);
+            }
+
+            Log.info(Messages.ServerDrunkModeStarted, viewer);
+            SendPlayerMessage(player, Messages.ClientDrunkModeStarted, viewer);
+
+            return res
+                    .SetNewStates(states.setDrunkMode(true))
+                    .SetEffectResult(EffectResult.Success);
+        } else if (type == RequestType.Stop) {
+            if (!states.getDrunkMode()) {
+                return res.SetEffectResult(EffectResult.Retry);
+            }
+
+            Log.info(Messages.ServerDrunkModeRestored);
+            SendPlayerMessage(player, Messages.ClientDrunkModeRestored);
+
+            return res
+                    .SetNewStates(states.setDrunkMode(false))
+                    .SetEffectResult(EffectResult.Success);
+        }
+
+        return res.SetEffectResult(EffectResult.Success);
     }
 
     public static CommandResult GottaGoFast(PlayerStates states, PlayerEntity unused, Minecraft client, MinecraftServer server, String viewer, RequestType type) {

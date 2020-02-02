@@ -36,5 +36,6 @@ public class Minecraft : SimpleTCPPack
 		new Effect("Food blessing", "fill_food"),
 		new Effect("Make it rain (1 minute)", "make_it_rain"),
 		new Effect("Gotta go fast (1 minute)", "gotta_go_fast"),
+		new Effect("Drunk Mode (1 minute)", "drunk_mode"),
     };
 }
