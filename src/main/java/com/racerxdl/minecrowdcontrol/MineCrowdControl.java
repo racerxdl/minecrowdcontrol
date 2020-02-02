@@ -1,8 +1,14 @@
 package com.racerxdl.minecrowdcontrol;
 
+import net.minecraft.client.GameSettings;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.AbstractOption;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -13,6 +19,10 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("minecrowdcontrol")
 public class MineCrowdControl {
@@ -20,6 +30,7 @@ public class MineCrowdControl {
     private static final Logger Log = LogManager.getLogger();
 
     private ControlServer cs;
+    private Minecraft client;
 
     public MineCrowdControl() {
         // Register the setup method for modloading
@@ -36,8 +47,8 @@ public class MineCrowdControl {
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
-        // do something that can only be done on the client
-//        Log.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
+        Log.info("Got Client");
+        this.client = event.getMinecraftSupplier().get();
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -48,18 +59,26 @@ public class MineCrowdControl {
     }
 
     @SubscribeEvent
-    public void onServerStarting(FMLServerStoppingEvent event) {
+    public void onServerStopping(FMLServerStoppingEvent event) {
         Log.info("Server stopping. Stopping Control Server");
         cs.Stop();
         cs = null;
+    }
+
+    @SubscribeEvent(priority= EventPriority.LOWEST)
+    public void onJump(LivingEvent.LivingJumpEvent event) {
+        if (cs.GetStates().getJumpDisabled()) {
+            Vec3d motion = event.getEntity().getMotion();
+            event.getEntity().setMotion(motion.getX(), 0, motion.getZ());
+        }
     }
 
     @SubscribeEvent
     public void onWorldEntry(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof PlayerEntity) {
             Log.info("Player in. Starting CrowdControl");
-            cs.SetWorld(event.getWorld());
             cs.SetPlayer((PlayerEntity) event.getEntity());
+            cs.SetClient(client);
             cs.Start();
         }
     }

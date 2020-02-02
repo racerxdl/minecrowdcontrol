@@ -1,6 +1,9 @@
 package com.racerxdl.minecrowdcontrol;
 
 import com.racerxdl.minecrowdcontrol.CrowdControl.EffectResult;
+import com.racerxdl.minecrowdcontrol.CrowdControl.RequestType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.AbstractOption;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -33,6 +36,13 @@ public class Commands {
         put("SET_TIME_DAY", Commands::SetTimeDay);
         put("TAKE_FOOD", Commands::TakeFood);
         put("GIVE_FOOD", Commands::GiveFood);
+        put("SEND_PLAYER_TO_SPAWN_POINT", Commands::SendPlayerToSpawnPoint);
+        put("TAKE_ALL_HEARTS_BUT_HALF", Commands::TakeAllHeartsButHalf);
+        put("FILL_HEARTS", Commands::FillHearts);
+        put("SPAWN_ENDERMAN", Commands::SpawnEnderman);
+        put("SPAWN_ENDERDRAGON", Commands::SpawnEnderdragon);
+        put("INVERT_MOUSE", Commands::SetInvertMouse);
+        put("DISABLE_JUMP", Commands::SetJumpDisabled);
     }};
 
     public static void SetEnablePlayerMessages(boolean status) {
@@ -55,7 +65,71 @@ public class Commands {
         }
     }
 
-    public static EffectResult SetTimeNight(PlayerEntity player, MinecraftServer server, String viewer) {
+    public static CommandResult SetInvertMouse(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer unused2, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Start) {
+            if (client.gameSettings.invertMouse) {
+                return res.SetEffectResult(EffectResult.Retry);
+            }
+
+            Log.info(Messages.ServerInvertMouse, viewer, player.getName().getString());
+            SendPlayerMessage(player, Messages.ClientInvertMouse, viewer);
+            AbstractOption.INVERT_MOUSE.set(client.gameSettings, "true");
+            return  res.SetEffectResult(EffectResult.Success);
+        } else if (type == RequestType.Stop) {
+            if (!client.gameSettings.invertMouse) {
+                return  res.SetEffectResult(EffectResult.Retry);
+            }
+
+            Log.info(Messages.ServerRestoreInvertMouse, player.getName().getString());
+            SendPlayerMessage(player, Messages.ClientRestoreInvertMouse);
+            AbstractOption.INVERT_MOUSE.set(client.gameSettings, "false");
+            return  res.SetEffectResult(EffectResult.Success);
+        }
+
+        return  res.SetEffectResult(EffectResult.Success);
+    }
+
+    public static CommandResult SetJumpDisabled(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer unused2, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Start) {
+            if (res.GetPlayerStates().getJumpDisabled()) {
+                return res.SetEffectResult(EffectResult.Retry);
+            }
+
+//            Log.info(Messages.ServerInvertMouse, viewer, player.getName().getString());
+//            SendPlayerMessage(player, Messages.ClientInvertMouse, viewer);
+            return res
+                    .SetEffectResult(EffectResult.Success)
+                    .SetNewStates(res.GetPlayerStates().setJumpDisabled(true));
+        } else if (type == RequestType.Stop) {
+            if (!res.GetPlayerStates().getJumpDisabled()) {
+                return res.SetEffectResult(EffectResult.Retry);
+            }
+
+//            Log.info(Messages.ServerRestoreInvertMouse, player.getName().getString());
+//            SendPlayerMessage(player, Messages.ClientRestoreInvertMouse);
+            return res
+                    .SetEffectResult(EffectResult.Success)
+                    .SetNewStates(res.GetPlayerStates().setJumpDisabled(false));
+        }
+
+        return res.SetEffectResult(EffectResult.Success);
+    }
+
+    public static CommandResult SetTimeNight(PlayerStates states, PlayerEntity player, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         World world = player.getEntityWorld();
         if (world.getDayTime() < 13000 || world.getDayTime() > 23000) {
             Log.info(Messages.ServerSetTimeNight, viewer);
@@ -65,13 +139,48 @@ public class Commands {
                 p.getEntityWorld().setDayTime(Tools.NIGHT);
                 return true;
             });
-            return EffectResult.Success;
+            return res.SetEffectResult(EffectResult.Success);
         }
 
-        return EffectResult.Unavailable;
+        return res.SetEffectResult(EffectResult.Unavailable);
     }
 
-    public static EffectResult SetTimeDay(PlayerEntity player, MinecraftServer server, String viewer) {
+    public static CommandResult SendPlayerToSpawnPoint(PlayerStates states, PlayerEntity entity, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player) -> {
+            BlockPos spawnPoint = player.getEntityWorld().getSpawnPoint();
+
+            player.setPositionAndUpdate(spawnPoint.getX(), spawnPoint.getY(), spawnPoint.getZ());
+
+            Log.info(Messages.ServerSendPlayerToSpawnPoint, viewer, player.getName().getString());
+            SendPlayerMessage(player, Messages.ClientSendPlayerToSpawnPoint, viewer);
+
+            return true;
+        });
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult SetTimeDay(PlayerStates states, PlayerEntity player, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         World world = player.getEntityWorld();
         if (world.getDayTime() > 6000) {
             Log.info(Messages.ServerSetTimeDay, viewer);
@@ -81,18 +190,28 @@ public class Commands {
                 return true;
             });
             world.setDayTime(Tools.DAY);
-            return EffectResult.Success;
+            return res.SetEffectResult(EffectResult.Success);
         }
 
-        return EffectResult.Unavailable;
+        return res.SetEffectResult(EffectResult.Unavailable);
     }
 
-    public static EffectResult SpawnCreeper(PlayerEntity unused, MinecraftServer server, String viewer) {
+    public static CommandResult SpawnCreeper(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player) -> {
             BlockPos pos = player.getPosition();
 
-            Log.info(Messages.ServerSpawnCreeper, viewer);
-            SendPlayerMessage(player, Messages.ClientSpawnCreeper, viewer);
+            Log.info(Messages.ServerSpawn, viewer, "creeper");
+            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "creeper");
 
             Entity e = EntityType.CREEPER.create(player.getEntityWorld());
             e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
@@ -102,10 +221,76 @@ public class Commands {
             return true;
         });
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
-    public static EffectResult TakeFood(PlayerEntity player, MinecraftServer server, String viewer) {
+    public static CommandResult SpawnEnderman(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player) -> {
+            BlockPos pos = player.getPosition();
+
+            Log.info(Messages.ServerSpawn, viewer, "enderman");
+            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "enderman");
+
+            Entity e = EntityType.ENDERMAN.create(player.getEntityWorld());
+            e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
+
+            player.getEntityWorld().addEntity(e);
+
+            return true;
+        });
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult SpawnEnderdragon(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player) -> {
+            BlockPos pos = player.getPosition();
+
+            Log.info(Messages.ServerSpawn, viewer, "enderdragon");
+            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "enderdragon");
+
+            Entity e = EntityType.ENDER_DRAGON.create(player.getEntityWorld());
+            e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
+
+            player.getEntityWorld().addEntity(e);
+
+            return true;
+        });
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult TakeFood(PlayerStates states, PlayerEntity player, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (p -> {
             FoodStats fs = p.getFoodStats();
             if (fs.getFoodLevel() > 0) {
@@ -118,10 +303,20 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
     }
 
-    public static EffectResult GiveFood(PlayerEntity unused, MinecraftServer server, String viewer) {
+    public static CommandResult GiveFood(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player -> {
             FoodStats fs = player.getFoodStats();
             if (fs.getFoodLevel() < Tools.MAX_FOOD) {
@@ -135,11 +330,72 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ? res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
     }
 
+    public static CommandResult TakeAllHeartsButHalf(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
 
-    public static EffectResult TakeHeart(PlayerEntity unused, MinecraftServer server, String viewer) {
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player -> {
+            if (player.getHealth() > 1) {
+                Log.info(Messages.ServerTakeAllHeartsButHalf, viewer, player.getName().getString());
+                SendPlayerMessage(player, Messages.ClientTakeAllHeartsButHalf, viewer);
+                player.setHealth(1);
+
+                return true;
+            }
+
+            return false;
+        }));
+
+        return result ? res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult FillHearts(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player -> {
+            if (player.getHealth() != Tools.MAX_HEALTH) {
+                Log.info(Messages.ServerFillAllHearts, viewer, player.getName().getString());
+                SendPlayerMessage(player, Messages.ClientFillAllHearts, viewer);
+                player.setHealth(Tools.MAX_HEALTH);
+
+                return true;
+            }
+
+            return false;
+        }));
+
+        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
+    }
+
+    public static CommandResult TakeHeart(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player -> {
             if (player.getHealth() > 2) {
                 Log.info(Messages.ServerTakeHeart, viewer, player.getName().getString());
@@ -152,10 +408,20 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
     }
 
-    public static EffectResult GiveHeart(PlayerEntity unused, MinecraftServer server, String viewer) {
+    public static CommandResult GiveHeart(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player -> {
             if (player.getHealth() < Tools.MAX_HEALTH) {
                 Log.info(Messages.ServerGiveHeart, viewer, player.getName().getString());
@@ -167,10 +433,20 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
     }
 
-    public static EffectResult SetFire(PlayerEntity unused, MinecraftServer server, String viewer) {
+    public static CommandResult SetFire(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player -> {
             if (player.getFireTimer() == -20) {
                 Log.info(Messages.ServerSetFire, viewer, player.getName().getString());
@@ -182,10 +458,20 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Retry;
+        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Retry);
     }
 
-    public static EffectResult KillPlayers(PlayerEntity unused, MinecraftServer server, String viewer) {
+    public static CommandResult KillPlayers(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
         boolean result = RunOnPlayers(server, (player -> {
             float health = player.getHealth();
             if (health != 0) {
@@ -198,6 +484,6 @@ public class Commands {
             return false;
         }));
 
-        return result ? EffectResult.Success : EffectResult.Unavailable;
+        return result ?  res.SetEffectResult(EffectResult.Success) :  res.SetEffectResult(EffectResult.Unavailable);
     }
 }

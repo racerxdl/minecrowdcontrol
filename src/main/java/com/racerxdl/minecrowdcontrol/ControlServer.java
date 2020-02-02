@@ -5,46 +5,31 @@ import com.racerxdl.minecrowdcontrol.CrowdControl.EffectResult;
 import com.racerxdl.minecrowdcontrol.CrowdControl.Request;
 import com.racerxdl.minecrowdcontrol.CrowdControl.RequestType;
 import com.racerxdl.minecrowdcontrol.CrowdControl.Response;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.monster.CreeperEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.FoodStats;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.*;
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.MessageFormat;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ControlServer {
     private static final Logger Log = LogManager.getLogger();
 
-    MinecraftServer server;
-    World world;
-    PlayerEntity player;
-    boolean started;
-    AtomicBoolean running;
+    private MinecraftServer server;
+    private PlayerEntity player;
+    private AtomicBoolean running;
+    private Minecraft client;
+    private PlayerStates states;
 
     public ControlServer(MinecraftServer server) {
         this.server = server;
-        this.started = false;
         this.running = new AtomicBoolean(false);
+        this.states = new PlayerStates();
         Commands.SetEnablePlayerMessages(true);
     }
 
@@ -62,12 +47,17 @@ public class ControlServer {
         running.set(false);
     }
 
-    public void SetWorld(World world) {
-        if (world.isRemote) {
-            return;
-        }
-        Log.info("Setting world to " + world.toString());
-        this.world = world;
+    public PlayerStates GetStates() {
+        return this.states.Clone();
+    }
+
+    private void SetStates(PlayerStates states) {
+        this.states = states.Clone();
+    }
+
+    public void SetClient(Minecraft client) {
+        Log.info("Setting client!");
+        this.client = client;
     }
 
     public void SetPlayer(PlayerEntity player) {
@@ -114,12 +104,12 @@ public class ControlServer {
         }
     }
 
-    public EffectResult RunCommand(String command, String viewer) {
+    public CommandResult RunCommand(String command, String viewer, RequestType type) {
         if (Commands.CommandList.get(command.toUpperCase()) != null) {
-            return Commands.CommandList.get(command.toUpperCase()).Run(player, server, viewer);
+            return Commands.CommandList.get(command.toUpperCase()).Run(GetStates(), player, client, server, viewer, type);
         }
 
-        return EffectResult.Unavailable;
+        return new CommandResult(GetStates()).SetEffectResult(EffectResult.Unavailable);
     }
 
     public String ParseJSON(String data) {
@@ -127,13 +117,10 @@ public class ControlServer {
         try {
             Request req = Request.FromJSON(data);
             res.id = req.id;
-            res.status = EffectResult.Success;
-            res.message = "Test";
-
-            if (req.type == RequestType.Start) {
-                res.status = RunCommand(req.code, req.viewer);
-                res.message = "Effect " + req.code + ": " + res.status;
-            }
+            CommandResult cmdRes = RunCommand(req.code, req.viewer, req.type);
+            res.status = cmdRes.GetEffectResult();
+            SetStates(cmdRes.GetPlayerStates());
+            res.message = "Effect " + req.code + ": " + res.status;
 
             return res.ToJSON();
         } catch (JsonSyntaxException e) {

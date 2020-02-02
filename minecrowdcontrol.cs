@@ -24,6 +24,13 @@ public class Minecraft : SimpleTCPPack
         new Effect("Set Time Night", "set_time_night"),
         new Effect("Set Time Day", "set_time_day"),
         new Effect("Take one food", "take_food"),
-        new Effect("Give one food", "give_food")
+        new Effect("Give one food", "give_food"),
+        new Effect("Send player to Spawn Point", "send_player_to_spawn_point"),
+        new Effect("Take all hearts and leave half heart", "take_all_hearts_but_half"),
+        new Effect("Fill all hearts", "fill_hearts"),
+        new Effect("Spawn Enderman", "spawn_enderman"),
+        new Effect("Spawn Enderdragon", "spawn_enderdragon"),
+		new Effect("Invert Mouse", "invert_mouse"),
+		new Effect("Disable Jump", "disable_jump"),
     };
 }
