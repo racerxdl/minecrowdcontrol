@@ -8,6 +8,7 @@ import com.racerxdl.minecrowdcontrol.CrowdControl.Response;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,10 +99,13 @@ public class ControlServer {
         Log.info("Server loop started");
         while (running.get()) {
             try {
+                Commands.SendSystemMessage(server, TextFormatting.AQUA + "Trying to connect to Crowd Control");
                 Log.info("Trying to connect to Crowd Control");
                 Socket s = new Socket("localhost", 58430);
                 Log.info("Connected to crowd control!");
+                Commands.SendSystemMessage(server, TextFormatting.GREEN + "Connected to crowd control!");
                 clientLoop(s);
+                Commands.SendSystemMessage(server, TextFormatting.RED + "Disconnected from crowd control");
                 Log.info("Disconnected from crowd control");
             } catch (Exception e) {
                 Log.error("Socket error: " + e.getMessage());

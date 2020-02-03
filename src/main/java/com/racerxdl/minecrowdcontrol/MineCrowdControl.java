@@ -6,12 +6,14 @@ import net.minecraft.client.settings.AbstractOption;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -45,7 +47,7 @@ public class MineCrowdControl {
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-
+        ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, ModConfig.spec);
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
@@ -78,10 +80,17 @@ public class MineCrowdControl {
     @SubscribeEvent
     public void onWorldEntry(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof PlayerEntity) {
-            Log.info("Player in. Starting CrowdControl");
-            cs.SetPlayer((PlayerEntity) event.getEntity());
-            cs.SetClient(client);
-            cs.Start();
+            if (ModConfig.GENERAL.ModEnabled.get()) {
+                Log.info("Player in. Starting CrowdControl");
+                cs.SetPlayer((PlayerEntity) event.getEntity());
+                cs.SetClient(client);
+
+                Commands.SetEnablePlayerMessages(ModConfig.GENERAL.ShowEffectMessages.get());
+
+                cs.Start();
+            } else {
+                Commands.SendPlayerSystemMessage((PlayerEntity) event.getEntity(), TextFormatting.RED + "Crowd Control is disabled");
+            }
         }
     }
 

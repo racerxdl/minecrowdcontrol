@@ -67,8 +67,19 @@ public class Commands {
 
     public static void SendPlayerMessage(PlayerEntity player, String msg, Object... params) {
         if (enablePlayerMessages) {
-            player.sendStatusMessage(new StringTextComponent(MessageFormat.format(msg, params)), false);
+            SendPlayerSystemMessage(player, msg, params);
         }
+    }
+
+    public static void SendPlayerSystemMessage(PlayerEntity player, String msg, Object... params) {
+        player.sendStatusMessage(new StringTextComponent(MessageFormat.format(msg, params)), false);
+    }
+
+    public static void SendSystemMessage(MinecraftServer server, String msg, Object... params) {
+        RunOnPlayers(server, (player) -> {
+            SendPlayerSystemMessage(player, msg, params);
+            return true;
+        });
     }
 
     public static CommandResult DrunkMode(PlayerStates states, PlayerEntity player, Minecraft unused, MinecraftServer unused2, String viewer, RequestType type) {
