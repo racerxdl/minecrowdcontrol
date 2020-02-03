@@ -20,9 +20,11 @@ java -jar forge-1.15.2-31.0.16-installer.jar
 ```
 
 Select `Install Client` and let it install on the default path:
+
 ![Select Install Client](https://user-images.githubusercontent.com/578310/73618456-a0d0ad80-4606-11ea-8e72-e072c84b1e12.png)
 
 After that, a Minecraft Forge entry should appear in your Minecraft Launcher:
+
 ![Forge in Launcher](https://user-images.githubusercontent.com/578310/73618477-d8d7f080-4606-11ea-8c6f-aaffbdb63454.png)
 
 Now you should be ready to install the MineCrowdControl.
@@ -31,35 +33,31 @@ Now you should be ready to install the MineCrowdControl.
 
 1. Go to [Releases](https://github.com/racerxdl/minecrowdcontrol/releases) page and download the latest `minecrowdcontrol` jar file.
 2. Open Minecraft Launcher and start the Forge version you installed in the early step.
-3. Click in ![Mods](https://user-images.githubusercontent.com/578310/73618556-497f0d00-4607-11ea-8ace-df935b1f0db7.png) Button 
+3. Click in ![Mods](https://user-images.githubusercontent.com/578310/73618556-497f0d00-4607-11ea-8ace-df935b1f0db7.png) Button
 4. Click in ![Open Mods Folder](https://user-images.githubusercontent.com/578310/73618572-60bdfa80-4607-11ea-9242-2bf3fd552467.png) Button.
 5. Copy the `jar` file you downloaded to the folder that will open and restart the game.
 6. Go again to the `Mods` page and see if `Minecraft CrowdControl` is visible.
 
-<center>
+
 ![Minecraft Crowd Control](https://user-images.githubusercontent.com/578310/73618595-83e8aa00-4607-11ea-9856-df537c49b2c6.png)
-</center>
 
 
 Testing
 =========
 
-We use the [Crowd Control SDK](https://forum.warp.world/t/how-to-setup-and-use-the-crowd-control-sdk/5121) to test it which mimics the their server. Make sure you got it installed in your machine. 
+We use the [Crowd Control SDK](https://forum.warp.world/t/how-to-setup-and-use-the-crowd-control-sdk/5121) to test it which mimics the their server. Make sure you got it installed in your machine.
 
 Developing
 ==========
 
-TODO
+TODO - Please refer to [https://mcforge.readthedocs.io/en/latest/gettingstarted/](https://mcforge.readthedocs.io/en/latest/gettingstarted/)
 
-
-Original README
-----------------
 
 -------------------------------------------
 Source installation information for modders
 -------------------------------------------
 This code follows the Minecraft Forge installation methodology. It will apply
-some small patches to the vanilla MCP source code, giving you and it access 
+some small patches to the vanilla MCP source code, giving you and it access
 to some of the data and functions you need to build a successful mod.
 
 Note also that the patches are built against "unrenamed" MCP source code (aka
@@ -79,7 +77,7 @@ Step 1: Open your command-line and browse to the folder where you extracted the 
 Step 2: You're left with a choice.
 If you prefer to use Eclipse:
 1. Run the following command: "gradlew genEclipseRuns" (./gradlew genEclipseRuns if you are on Mac/Linux)
-2. Open Eclipse, Import > Existing Gradle Project > Select Folder 
+2. Open Eclipse, Import > Existing Gradle Project > Select Folder
    or run "gradlew eclipse" to generate the project.
 (Current Issue)
 4. Open Project > Run/Debug Settings > Edit runClient and runServer > Environment
@@ -93,7 +91,7 @@ If you prefer to use IntelliJ:
 
 If at any point you are missing libraries in your IDE, or you've run into problems you can run "gradlew --refresh-dependencies" to refresh the local cache. "gradlew clean" to reset everything {this does not affect your code} and then start the processs again.
 
-Should it still not work, 
+Should it still not work,
 Refer to #ForgeGradle on EsperNet for more information about the gradle environment.
 or the Forge Project Discord discord.gg/UvedJ9m
 
