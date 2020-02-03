@@ -5,6 +5,28 @@ Minecraft Crowd Control Mod
 
 This is a modification for Minecraft (Java Edition) that can interact with [Crowd Control](https://crowdcontrol.live/)
 
+
+Features
+=========
+
+* Kill the player
+* Give / Take one Heart
+* Give / Take one Food
+* Set fire on player
+* Spawn Creeper / Enderman / Enderdragon
+* Set Time Day / Night
+* Send player back to spawn point
+* Take all hearts and leave player with half
+* Fill all hearts
+* Invert Mouse (2 minutes)
+* Disable Jump (1 minute)
+* Make it hungry (take all food)
+* Food Blessing (fill food)
+* Make it rain (1 minute)
+* [Gotta go fast (1 minute)](https://www.twitch.tv/racerxdl/clip/AgileSuspiciousCucumberOhMyDog)
+* [Drunk Mode (1 minute)](https://www.twitch.tv/racerxdl/clip/SpookyInnocentWrenchANELE)
+
+
 Installing
 ==========
 
