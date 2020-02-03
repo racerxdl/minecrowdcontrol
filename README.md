@@ -1,5 +1,60 @@
 ![Minecraft Mod CI](https://github.com/racerxdl/minecrowdcontrol/workflows/Minecraft%20Mod%20CI/badge.svg)
 
+Minecraft Crowd Control Mod
+===========================
+
+This is a modification for Minecraft (Java Edition) that can interact with [Crowd Control](https://crowdcontrol.live/)
+
+Installing
+==========
+
+For running this mod, you will need the oficial [Minecraft Launcher](https://www.minecraft.net/download/) and Minecraft Forge (1.15.2) installed.
+
+Make sure you have Minecraft installed before doing anything.
+
+##### 1. Get Minecraft Forge
+To get the Minecraft Forge, download the [Forge Installer 1.15.2](https://files.minecraftforge.net/maven/net/minecraftforge/forge/1.15.2-31.0.16/forge-1.15.2-31.0.16-installer.jar) and run it:
+
+```bash
+java -jar forge-1.15.2-31.0.16-installer.jar
+```
+
+Select `Install Client` and let it install on the default path:
+![Select Install Client](https://user-images.githubusercontent.com/578310/73618456-a0d0ad80-4606-11ea-8e72-e072c84b1e12.png)
+
+After that, a Minecraft Forge entry should appear in your Minecraft Launcher:
+![Forge in Launcher](https://user-images.githubusercontent.com/578310/73618477-d8d7f080-4606-11ea-8c6f-aaffbdb63454.png)
+
+Now you should be ready to install the MineCrowdControl.
+
+#### 2. Installing Minecrowd Control
+
+1. Go to [Releases](https://github.com/racerxdl/minecrowdcontrol/releases) page and download the latest `minecrowdcontrol` jar file.
+2. Open Minecraft Launcher and start the Forge version you installed in the early step.
+3. Click in ![Mods](https://user-images.githubusercontent.com/578310/73618556-497f0d00-4607-11ea-8ace-df935b1f0db7.png) Button 
+4. Click in ![Open Mods Folder](https://user-images.githubusercontent.com/578310/73618572-60bdfa80-4607-11ea-9242-2bf3fd552467.png) Button.
+5. Copy the `jar` file you downloaded to the folder that will open and restart the game.
+6. Go again to the `Mods` page and see if `Minecraft CrowdControl` is visible.
+
+<center>
+![Minecraft Crowd Control](https://user-images.githubusercontent.com/578310/73618595-83e8aa00-4607-11ea-9856-df537c49b2c6.png)
+</center>
+
+
+Testing
+=========
+
+We use the [Crowd Control SDK](https://forum.warp.world/t/how-to-setup-and-use-the-crowd-control-sdk/5121) to test it which mimics the their server. Make sure you got it installed in your machine. 
+
+Developing
+==========
+
+TODO
+
+
+Original README
+----------------
+
 -------------------------------------------
 Source installation information for modders
 -------------------------------------------
