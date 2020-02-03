@@ -38,7 +38,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: build-${{ steps.getbuildversion.outputs.version }}
-        release_name: Release ${{ github.ref }} (${{ steps.getbuildversion.outputs.version }})
+        release_name: Release (${{ steps.getbuildversion.outputs.version }})
         draft: false
         prerelease: false
     - name: Upload JAR
