@@ -1,4 +1,4 @@
-name: Android CI
+name: Minecraft Mod CI
 
 on: [push]
 
