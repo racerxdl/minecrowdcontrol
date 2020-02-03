@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-
+    name: "Mod Build"
     runs-on: ubuntu-latest
 
     steps:
@@ -15,8 +15,16 @@ jobs:
         java-version: 1.8
     - name: Build with Gradle
       run: ./gradlew build
-    - name: Upload artifacts
+    - name: Get Build Filename
+      id: getfilename
+      run: echo "::set-output name=file::$(ls build/libs/minecrowdcontrol-*.jar)"
+    - name: Upload build
       uses: actions/upload-artifact@v1
       with:
-          name: minecrowdcontrol
-          path: build/libs/*.jar
+        name: "Minecraft Mod JAR file"
+        path: ${{ steps.getfilename.outputs.file }}
+    - name: Upload Crowd Control CS file
+      uses: actions/upload-artifact@v1
+      with:
+        name: "Crowd Control Configuration"
+        path: "minecrowdcontrol.cs"

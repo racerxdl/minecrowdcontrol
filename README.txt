@@ -1,3 +1,5 @@
+![Minecraft Mod CI](https://github.com/racerxdl/minecrowdcontrol/workflows/Minecraft%20Mod%20CI/badge.svg)
+
 -------------------------------------------
 Source installation information for modders
 -------------------------------------------
