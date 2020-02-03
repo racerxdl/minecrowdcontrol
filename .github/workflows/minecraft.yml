@@ -13,6 +13,9 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+    - name: Get Build Version
+      id: getbuildversion
+      run: echo "::set-output name=version::$(./gradlew --console=plain -q properties |grep ^version | cut -d':' -f2 | tr -d '[:space:]')"
     - name: Build with Gradle
       run: ./gradlew build
     - name: Get Build Filename
@@ -28,3 +31,33 @@ jobs:
       with:
         name: "Crowd Control Configuration"
         path: "minecrowdcontrol.cs"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: build-${{ steps.getbuildversion.outputs.version }}
+        release_name: Release ${{ github.ref }} (${{ steps.getbuildversion.outputs.version }})
+        draft: false
+        prerelease: false
+    - name: Upload JAR
+      id: upload-jar
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ${{ steps.getfilename.outputs.file }}
+        asset_name: minecrowdcontrol.jar
+        asset_content_type: application/zip
+    - name: Upload CS File
+      id: upload-cs-file
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: minecrowdcontrol.cs
+        asset_name: minecrowdcontrol.cs
+        asset_content_type: text/plains
