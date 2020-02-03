@@ -69,6 +69,15 @@ Testing
 
 We use the [Crowd Control SDK](https://forum.warp.world/t/how-to-setup-and-use-the-crowd-control-sdk/5121) to test it which mimics the their server. Make sure you got it installed in your machine.
 
+1. Open `Crowd Control EffectPack SDK`
+2. Click in ![Load Pack Source](https://user-images.githubusercontent.com/578310/73620150-47b94780-460f-11ea-95fc-acc71e6345e7.png)
+3. Select `minecrowdcontrol.cs` (it is provided with releases and on the root of this repository)
+4. Select `Minecraft` in the list ![Minecraft](https://user-images.githubusercontent.com/578310/73620196-7fc08a80-460f-11ea-9490-c2690fe05672.png) and click button ![Select Pack](https://user-images.githubusercontent.com/578310/73620201-85b66b80-460f-11ea-9141-7532de617dc2.png)
+5. Click in ![Connect](https://user-images.githubusercontent.com/578310/73620231-a7175780-460f-11ea-9b09-f058510b90dc.png) button
+6. Open up Minecraft with the installed mod and it should connect automatically.
+
+![Effect List](https://user-images.githubusercontent.com/578310/73620251-ba2a2780-460f-11ea-9acc-f678e7b734b6.png)
+
 Developing
 ==========
 
