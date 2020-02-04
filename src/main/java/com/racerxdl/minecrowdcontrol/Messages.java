@@ -31,6 +31,9 @@ public class Messages {
     public static final String ServerGottaGoFastRestored = "Speed are now normal";
     public static final String ServerDrunkModeStarted = "Viewer {} just made game drunk";
     public static final String ServerDrunkModeRestored = "Game is not drunk anymore";
+    public static final String ServerDestroyItem = "Viewer {} just destroyed {} {}";
+    public static final String ServerDropItem = "Viewer {} just dropped {} {}";
+    public static final String ServerRepairItem = "Viewer {} just repaired {} {}";
     // endregion
 
     // region Client Messages
@@ -58,5 +61,8 @@ public class Messages {
     public static final String ClientGottaGoFastRestored = "Speed are now normal";
     public static final String ClientDrunkModeStarted = "Viewer {0} just made game drunk";
     public static final String ClientDrunkModeRestored = "Game is not drunk anymore";
+    public static final String ClientDestroyItem = TextFormatting.RED + "Viewer {0} just destroyed your {1}";
+    public static final String ClientDropItem = TextFormatting.RED + "Viewer {0} just dropped your {1}";
+    public static final String ClientRepairItem = TextFormatting.RED + "Viewer {0} just repaired your {1}";
     // endregion
 }

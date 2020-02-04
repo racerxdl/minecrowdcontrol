@@ -37,5 +37,9 @@ public class Minecraft : SimpleTCPPack
 		new Effect("Make it rain (1 minute)", "make_it_rain"),
 		new Effect("Gotta go fast (1 minute)", "gotta_go_fast"),
 		new Effect("Drunk Mode (1 minute)", "drunk_mode"),
+		new Effect("Destroy Selected Item", "destroy_selected_item"),
+		new Effect("Drop Selected Item", "drop_selected_item"),
+		new Effect("Repair Selected Item", "repair_selected_item"),
+		new Effect("Explode Player", "explode_player"),
     };
 }

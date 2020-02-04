@@ -82,8 +82,8 @@ public class MineCrowdControl {
         if (event.getEntity() instanceof PlayerEntity) {
             if (ModConfig.GENERAL.ModEnabled.get()) {
                 Log.info("Player in. Starting CrowdControl");
-                cs.SetPlayer((PlayerEntity) event.getEntity());
                 cs.SetClient(client);
+                cs.SetPlayer((PlayerEntity) event.getEntity());
 
                 Commands.SetEnablePlayerMessages(ModConfig.GENERAL.ShowEffectMessages.get());
 

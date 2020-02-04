@@ -93,6 +93,13 @@ public class ControlServer {
     public void SetPlayer(PlayerEntity player) {
         Log.info("Setting player to " + player.toString());
         this.player = player;
+        if (GetStates().getGottaGoFast()) {
+            executorService.schedule(() -> {
+                Log.info("Re-enabling Gotta Go Fast");
+                SetStates(GetStates().setGottaGoFast(false));
+                RunCommand("GOTTA_GO_FAST", GetStates().getGottaGoFastViewer(), RequestType.Start);
+            }, 500, TimeUnit.MILLISECONDS);
+        }
     }
 
     private void serverLoop() {

@@ -4,21 +4,26 @@ import com.racerxdl.minecrowdcontrol.CrowdControl.EffectResult;
 import com.racerxdl.minecrowdcontrol.CrowdControl.RequestType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.AbstractOption;
+import net.minecraft.entity.AreaEffectCloudEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.CCreativeInventoryActionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FoodStats;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +54,10 @@ public class Commands {
         put("MAKE_IT_RAIN", Commands::SetRaining);
         put("GOTTA_GO_FAST", Commands::GottaGoFast);
         put("DRUNK_MODE", Commands::DrunkMode);
+        put("DESTROY_SELECTED_ITEM", Commands::DestroySelectedItem);
+        put("DROP_SELECTED_ITEM", Commands::DropSelectedItem);
+        put("REPAIR_SELECTED_ITEM", Commands::RepairSelectedItem);
+        put("EXPLODE_PLAYER", Commands::ExplodePlayer);
     }};
 
     public static void SetEnablePlayerMessages(boolean status) {
@@ -80,6 +89,126 @@ public class Commands {
             SendPlayerSystemMessage(player, msg, params);
             return true;
         });
+    }
+
+    public static CommandResult ExplodePlayer(PlayerStates states, PlayerEntity p, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        boolean result = RunOnPlayers(server, (player -> {
+            float health = player.getHealth();
+            if (health != 0) {
+                Log.info(Messages.ServerKill, viewer, player.getName().getString());
+                SendPlayerMessage(player, Messages.ClientKill, viewer);
+
+                player.world.createExplosion(player, player.getPosX(), player.getPosY(), player.getPosZ(), 8, Explosion.Mode.DESTROY);
+
+                player.world.makeFireworks(player.getPosX(), player.getPosY(), player.getPosZ(), 0, 0, 0, null);
+                player.setHealth(0);
+                return true;
+            }
+
+            return false;
+        }));
+
+        if (result) {
+            client.player.playSound(SoundEvents.ENTITY_ENDERMAN_SCREAM, 6, 0.25f);
+            Log.debug("WOLOLO");
+            p.world.makeFireworks(p.getPosX(), p.getPosY(), p.getPosZ() + 20, 0, 0, 0, null);
+            p.setMotion(2, 2, 2);
+        }
+
+        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Unavailable);
+    }
+
+    public static CommandResult RepairSelectedItem(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        int itemIndex = player.inventory.currentItem;
+        ItemStack is = player.inventory.mainInventory.get(itemIndex);
+
+        if (is.isEmpty() || !is.isRepairable() || is.getDamage() == 0 || player.getHealth() == 0) {
+            return res.SetEffectResult(EffectResult.Retry);
+        }
+
+        RunOnPlayers(server, (p) -> {
+            p.inventory.mainInventory.get(itemIndex).setDamage(0);
+            return true;
+        });
+
+        player.inventory.mainInventory.get(itemIndex).setDamage(0);
+
+        client.player.playSound(SoundEvents.BLOCK_ANVIL_HIT, 1, 1);
+
+        Log.info(Messages.ServerRepairItem, viewer, player.getName().getString(), is.getItem().getName().getString());
+        SendPlayerMessage(player, Messages.ClientRepairItem, viewer, is.getItem().getName().getString());
+
+        return res.SetEffectResult(EffectResult.Success);
+    }
+
+    public static CommandResult DropSelectedItem(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        int itemIndex = player.inventory.currentItem;
+        ItemStack is = player.inventory.mainInventory.get(itemIndex);
+
+        if (is.isEmpty() || player.getHealth() == 0) {
+            return res.SetEffectResult(EffectResult.Retry);
+        }
+
+        RunOnPlayers(server, (p) -> {
+            p.dropItem(is, false);
+            p.inventory.mainInventory.set(itemIndex, ItemStack.EMPTY);
+            return true;
+        });
+
+        player.inventory.mainInventory.set(itemIndex, ItemStack.EMPTY);
+
+        client.player.playSound(SoundEvents.ENTITY_COW_DEATH, 1, 8);
+
+        Log.info(Messages.ServerDropItem, viewer, player.getName().getString(), is.getItem().getName().getString());
+        SendPlayerMessage(player, Messages.ClientDropItem, viewer, is.getItem().getName().getString());
+
+        return res.SetEffectResult(EffectResult.Success);
+    }
+
+    public static CommandResult DestroySelectedItem(PlayerStates states, PlayerEntity player, Minecraft client, MinecraftServer server, String viewer, RequestType type) {
+        CommandResult res = new CommandResult(states);
+
+        int itemIndex = player.inventory.currentItem;
+        ItemStack is = player.inventory.mainInventory.get(itemIndex);
+        if (is.isEmpty() || player.getHealth() == 0) {
+            return res.SetEffectResult(EffectResult.Retry);
+        }
+
+        if (is.getCount() > 1) {
+            int newCount = is.getCount() - 1;
+            is.setCount(newCount);
+            RunOnPlayers(server, (p) -> {
+                p.inventory.mainInventory.get(itemIndex).setCount(newCount);
+                return true;
+            });
+        } else {
+            player.inventory.mainInventory.set(itemIndex, ItemStack.EMPTY);
+            RunOnPlayers(server, (p) -> {
+                p.inventory.mainInventory.set(itemIndex, ItemStack.EMPTY);
+                return true;
+            });
+        }
+
+        client.player.playSound(SoundEvents.ENTITY_COW_HURT, 1, 8);
+
+        Log.info(Messages.ServerDestroyItem, viewer, player.getName().getString(), is.getItem().getName().getString());
+        SendPlayerMessage(player, Messages.ClientDestroyItem, viewer, is.getItem().getName().getString());
+
+        return res.SetEffectResult(EffectResult.Success);
     }
 
     public static CommandResult DrunkMode(PlayerStates states, PlayerEntity player, Minecraft unused, MinecraftServer unused2, String viewer, RequestType type) {
@@ -146,7 +275,11 @@ public class Commands {
         });
 
         if (result) {
-            res = res.SetNewStates(res.GetPlayerStates().setGottaGoFast(type == RequestType.Start));
+            res = res.SetNewStates(
+                    res.GetPlayerStates()
+                            .setGottaGoFast(type == RequestType.Start)
+                            .setGottaGoFastViewer(viewer)
+            );
         }
 
         return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
@@ -286,6 +419,9 @@ public class Commands {
         }
 
         boolean result = RunOnPlayers(server, (player) -> {
+            if (player.getHealth() == 0) {
+                return false;
+            }
             BlockPos spawnPoint = player.getEntityWorld().getSpawnPoint();
 
             player.setPositionAndUpdate(spawnPoint.getX(), spawnPoint.getY(), spawnPoint.getZ());
@@ -422,7 +558,7 @@ public class Commands {
 
         boolean result = RunOnPlayers(server, (p -> {
             FoodStats fs = p.getFoodStats();
-            if (fs.getFoodLevel() > 0) {
+            if (fs.getFoodLevel() > 0 && player.getHealth() != 0) {
                 Log.info(Messages.ServerTakeFood, viewer, p.getName().getString());
                 SendPlayerMessage(p, Messages.ClientTakeFood, viewer);
                 fs.setFoodLevel(fs.getFoodLevel() - 2);
@@ -448,7 +584,7 @@ public class Commands {
 
         boolean result = RunOnPlayers(server, (player -> {
             FoodStats fs = player.getFoodStats();
-            if (fs.getFoodLevel() < Tools.MAX_FOOD) {
+            if (fs.getFoodLevel() < Tools.MAX_FOOD && player.getHealth() != 0) {
                 Log.info(Messages.ServerGiveFood, viewer, player.getName().getString());
                 SendPlayerMessage(player, Messages.ClientGiveFood, viewer);
                 fs.setFoodLevel(fs.getFoodLevel() + 2);
@@ -501,7 +637,7 @@ public class Commands {
 
         boolean result = RunOnPlayers(server, (player -> {
             FoodStats fs = player.getFoodStats();
-            if (fs.getFoodLevel() > 0) {
+            if (fs.getFoodLevel() > 0 && player.getHealth() != 0) {
                 Log.info(Messages.ServerTakeAllFood, viewer, player.getName().getString());
                 SendPlayerMessage(player, Messages.ClientTakeAllFood, viewer);
                 player.getFoodStats().setFoodLevel(0);
@@ -528,7 +664,7 @@ public class Commands {
 
         boolean result = RunOnPlayers(server, (player -> {
             FoodStats fs = player.getFoodStats();
-            if (fs.getFoodLevel() < Tools.MAX_FOOD) {
+            if (fs.getFoodLevel() < Tools.MAX_FOOD && player.getHealth() != 0) {
                 Log.info(Messages.ServerFillFood, viewer, player.getName().getString());
                 SendPlayerMessage(player, Messages.ClientFillFood, viewer);
                 player.getFoodStats().setFoodLevel(Tools.MAX_FOOD);
@@ -554,7 +690,7 @@ public class Commands {
         }
 
         boolean result = RunOnPlayers(server, (player -> {
-            if (player.getHealth() != Tools.MAX_HEALTH) {
+            if (player.getHealth() != Tools.MAX_HEALTH && player.getHealth() != 0) {
                 Log.info(Messages.ServerFillAllHearts, viewer, player.getName().getString());
                 SendPlayerMessage(player, Messages.ClientFillAllHearts, viewer);
                 player.setHealth(Tools.MAX_HEALTH);
@@ -606,7 +742,7 @@ public class Commands {
         }
 
         boolean result = RunOnPlayers(server, (player -> {
-            if (player.getHealth() < Tools.MAX_HEALTH) {
+            if (player.getHealth() < Tools.MAX_HEALTH && player.getHealth() != 0) {
                 Log.info(Messages.ServerGiveHeart, viewer, player.getName().getString());
                 SendPlayerMessage(player, Messages.ClientGiveHeart, viewer);
                 player.setHealth(player.getHealth() + 2);
