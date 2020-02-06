@@ -25,7 +25,10 @@ Features
 * Make it rain (1 minute)
 * [Gotta go fast (1 minute)](https://www.twitch.tv/racerxdl/clip/AgileSuspiciousCucumberOhMyDog)
 * [Drunk Mode (1 minute)](https://www.twitch.tv/racerxdl/clip/SpookyInnocentWrenchANELE)
-
+* Destroy Selected Item
+* Drop Selected Item
+* Repair Selected Item
+* Explode Player
 
 Installing
 ==========
@@ -62,6 +65,31 @@ Now you should be ready to install the MineCrowdControl.
 
 
 ![Minecraft Crowd Control](https://user-images.githubusercontent.com/578310/73618595-83e8aa00-4607-11ea-9856-df537c49b2c6.png)
+
+Changing Configuration
+=======================
+
+So far the 1.15.x version of forge has the GUI disabled for config (see https://github.com/MinecraftForge/MinecraftForge/pull/6467)
+so if you want to disable the mod or the Crowd Control messages you should edit the file manually.
+The config file is stored at:
+
+*   Windows: `%appdata%\.minecraft\config\minecrowdcontrol-common.toml`
+*   Linux: `~/.minecraft/config/minecrowdcontrol-common.toml`
+
+The file config is pretty easy, just change to `true` to enable a feature or `false` to disable it:
+
+```toml
+
+[General]
+	#Enables/Disables showing effect messages [false/true|default:true]
+	showEffectMessages = true
+	#Enables/Disables the whole Mod [false/true|default:true]
+	enableMod = true
+```
+
+The `showEffectMessages` has a hot-reload function and can be changed without restarting the game.
+
+The `enableMod` has a hot-reload function but you need to get back to the game main menu.
 
 
 Testing
