@@ -13,7 +13,7 @@ Features
 * Give / Take one Heart
 * Give / Take one Food
 * Set fire on player
-* Spawn Creeper / Enderman / Enderdragon
+* Spawn Creeper / Enderman / Enderdragon / Blaze / Cave Spider / Spider / Witch / Bee / Horse / Skeleton Horse / Zombie Horse / Zombie / Cow / Chicken / Pig
 * Set Time Day / Night
 * Send player back to spawn point
 * Take all hearts and leave player with half

@@ -24,9 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Commands {
     private static final Logger Log = LogManager.getLogger();
@@ -37,7 +35,6 @@ public class Commands {
         put("TAKE_HEART", Commands::TakeHeart);
         put("GIVE_HEART", Commands::GiveHeart);
         put("SET_FIRE", Commands::SetFire);
-        put("SPAWN_CREEPER", Commands::SpawnCreeper);
         put("SET_TIME_NIGHT", Commands::SetTimeNight);
         put("SET_TIME_DAY", Commands::SetTimeDay);
         put("TAKE_FOOD", Commands::TakeFood);
@@ -45,8 +42,6 @@ public class Commands {
         put("SEND_PLAYER_TO_SPAWN_POINT", Commands::SendPlayerToSpawnPoint);
         put("TAKE_ALL_HEARTS_BUT_HALF", Commands::TakeAllHeartsButHalf);
         put("FILL_HEARTS", Commands::FillHearts);
-        put("SPAWN_ENDERMAN", Commands::SpawnEnderman);
-        put("SPAWN_ENDERDRAGON", Commands::SpawnEnderdragon);
         put("INVERT_MOUSE", Commands::SetInvertMouse);
         put("DISABLE_JUMP", Commands::SetJumpDisabled);
         put("TAKE_ALL_FOOD", Commands::TakeAllFood);
@@ -59,6 +54,33 @@ public class Commands {
         put("REPAIR_SELECTED_ITEM", Commands::RepairSelectedItem);
         put("EXPLODE_PLAYER", Commands::ExplodePlayer);
     }};
+
+
+    private static final List<EntityType> spawnEntities = new ArrayList<>(Arrays.asList(
+            EntityType.CREEPER,
+            EntityType.ENDERMAN,
+            EntityType.ENDER_DRAGON,
+            EntityType.BLAZE,
+            EntityType.CAVE_SPIDER,
+            EntityType.SPIDER,
+            EntityType.WITCH,
+            EntityType.BEE,
+            EntityType.HORSE,
+            EntityType.SKELETON_HORSE,
+            EntityType.ZOMBIE_HORSE,
+            EntityType.ZOMBIE,
+            EntityType.COW,
+            EntityType.CHICKEN,
+            EntityType.PIG
+    ));
+
+    static {
+        spawnEntities.forEach((et) -> {
+            String entityName = et.getName().getString().toUpperCase().replace(" ", "");
+            Log.info("Adding command SPAWN_{}", entityName);
+            CommandList.put("SPAWN_" + entityName, (states, u, u1, server, viewer, type) -> SpawnEntity(states, server, viewer, type, et));
+        });
+    }
 
     public static void SetEnablePlayerMessages(boolean status) {
         enablePlayerMessages = status;
@@ -461,7 +483,7 @@ public class Commands {
         return res.SetEffectResult(EffectResult.Unavailable);
     }
 
-    public static CommandResult SpawnCreeper(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
+    public static CommandResult SpawnEntity(PlayerStates states, MinecraftServer server, String viewer, RequestType type, EntityType entityType) {
         CommandResult res = new CommandResult(states);
 
         if (type == RequestType.Test) {
@@ -475,66 +497,10 @@ public class Commands {
         boolean result = RunOnPlayers(server, (player) -> {
             BlockPos pos = player.getPosition();
 
-            Log.info(Messages.ServerSpawn, viewer, "creeper");
-            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "creeper");
+            Log.info(Messages.ServerSpawn, viewer, entityType.getName().getString());
+            SendPlayerMessage(player, Messages.ClientSpawn, viewer, entityType.getName().getString());
 
-            Entity e = EntityType.CREEPER.create(player.getEntityWorld());
-            e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
-
-            player.getEntityWorld().addEntity(e);
-
-            return true;
-        });
-
-        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
-    }
-
-    public static CommandResult SpawnEnderman(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
-        CommandResult res = new CommandResult(states);
-
-        if (type == RequestType.Test) {
-            return res.SetEffectResult(EffectResult.Success);
-        }
-
-        if (type == RequestType.Stop) {
-            return res.SetEffectResult(EffectResult.Unavailable);
-        }
-
-        boolean result = RunOnPlayers(server, (player) -> {
-            BlockPos pos = player.getPosition();
-
-            Log.info(Messages.ServerSpawn, viewer, "enderman");
-            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "enderman");
-
-            Entity e = EntityType.ENDERMAN.create(player.getEntityWorld());
-            e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
-
-            player.getEntityWorld().addEntity(e);
-
-            return true;
-        });
-
-        return result ? res.SetEffectResult(EffectResult.Success) : res.SetEffectResult(EffectResult.Retry);
-    }
-
-    public static CommandResult SpawnEnderdragon(PlayerStates states, PlayerEntity unused, Minecraft unused2, MinecraftServer server, String viewer, RequestType type) {
-        CommandResult res = new CommandResult(states);
-
-        if (type == RequestType.Test) {
-            return res.SetEffectResult(EffectResult.Success);
-        }
-
-        if (type == RequestType.Stop) {
-            return res.SetEffectResult(EffectResult.Unavailable);
-        }
-
-        boolean result = RunOnPlayers(server, (player) -> {
-            BlockPos pos = player.getPosition();
-
-            Log.info(Messages.ServerSpawn, viewer, "enderdragon");
-            SendPlayerMessage(player, Messages.ClientSpawn, viewer, "enderdragon");
-
-            Entity e = EntityType.ENDER_DRAGON.create(player.getEntityWorld());
+            Entity e = entityType.create(player.getEntityWorld());
             e.setPositionAndRotation(pos.getX() + 2, pos.getY() + 2, pos.getZ(), 0, 0);
 
             player.getEntityWorld().addEntity(e);
