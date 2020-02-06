@@ -34,6 +34,7 @@ public class Messages {
     public static final String ServerDestroyItem = "Viewer {} just destroyed {} {}";
     public static final String ServerDropItem = "Viewer {} just dropped {} {}";
     public static final String ServerRepairItem = "Viewer {} just repaired {} {}";
+    public static final String ServerCreateItem = "Viewer {} just gave {} a {}";
     // endregion
 
     // region Client Messages
@@ -64,5 +65,6 @@ public class Messages {
     public static final String ClientDestroyItem = TextFormatting.RED + "Viewer {0} just destroyed your {1}";
     public static final String ClientDropItem = TextFormatting.RED + "Viewer {0} just dropped your {1}";
     public static final String ClientRepairItem = TextFormatting.RED + "Viewer {0} just repaired your {1}";
+    public static final String ClientCreateItem = TextFormatting.GREEN + "Viewer {0} just gave you a {1}";
     // endregion
 }

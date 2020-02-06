@@ -10,7 +10,9 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.play.client.CCreativeInventoryActionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FoodStats;
@@ -55,7 +57,6 @@ public class Commands {
         put("EXPLODE_PLAYER", Commands::ExplodePlayer);
     }};
 
-
     private static final List<EntityType> spawnEntities = new ArrayList<>(Arrays.asList(
             EntityType.CREEPER,
             EntityType.ENDERMAN,
@@ -74,11 +75,38 @@ public class Commands {
             EntityType.PIG
     ));
 
+    private static final List<Item> spawnItems = new ArrayList<>(Arrays.asList(
+            Items.LEATHER,
+            Items.STONE,
+            Items.IRON_INGOT,
+            Items.GOLD_INGOT,
+            Items.DIAMOND,
+
+            Items.STONE_PICKAXE,
+            Items.STONE_SWORD,
+            Items.STONE_AXE,
+            Items.STONE_SHOVEL,
+
+            Items.ENDER_PEARL,
+
+            Items.DIAMOND_PICKAXE,
+            Items.DIAMOND_SWORD,
+            Items.DIAMOND_AXE,
+            Items.DIAMOND_HORSE_ARMOR,
+            Items.DIAMOND_SHOVEL
+    ));
+
     static {
         spawnEntities.forEach((et) -> {
             String entityName = et.getName().getString().toUpperCase().replace(" ", "");
             Log.info("Adding command SPAWN_{}", entityName);
             CommandList.put("SPAWN_" + entityName, (states, u, u1, server, viewer, type) -> SpawnEntity(states, server, viewer, type, et));
+        });
+
+        spawnItems.forEach((item) -> {
+            String itemName = item.getName().getString().toUpperCase().replace(" ", "");
+            Log.info("Adding command CREATE_{}", itemName);
+            CommandList.put("CREATE_" + itemName, (states, player, u1, server, viewer, type) -> SpawnItem(states, player, server, viewer, type, item));
         });
     }
 
@@ -111,6 +139,32 @@ public class Commands {
             SendPlayerSystemMessage(player, msg, params);
             return true;
         });
+    }
+
+    public static CommandResult SpawnItem(PlayerStates states, PlayerEntity p, MinecraftServer server, String viewer, RequestType type, Item item) {
+        CommandResult res = new CommandResult(states);
+
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop || p.getHealth() == 0) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        ItemStack is = new ItemStack(item);
+        is.setCount(1);
+        p.entityDropItem(is);
+        RunOnPlayers(server, (player -> {
+            player.entityDropItem(is);
+
+            Log.info(Messages.ServerCreateItem, viewer, player.getName().getString(), item.getName().getString());
+            SendPlayerMessage(player, Messages.ClientCreateItem, viewer, item.getName().getString());
+
+            return true;
+        }));
+
+        return res.SetEffectResult(EffectResult.Success);
     }
 
     public static CommandResult ExplodePlayer(PlayerStates states, PlayerEntity p, Minecraft client, MinecraftServer server, String viewer, RequestType type) {

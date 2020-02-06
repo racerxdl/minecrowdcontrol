@@ -55,5 +55,21 @@ public class Minecraft : SimpleTCPPack
         new Effect("Spawn Cow", "spawn_cow"),
         new Effect("Spawn Chicken", "spawn_chicken"),
         new Effect("Spawn Pig", "spawn_pig"),
+
+         new Effect("Create Leather", "create_leather"),
+         new Effect("Create Stone", "create_stone"),
+         new Effect("Create Iron Ingot", "create_ironingot"),
+         new Effect("Create Gold Ingot", "create_goldingot"),
+         new Effect("Create Diamon", "create_diamond"),
+         new Effect("Create Stone Pick Axe", "create_stonepickaxe"),
+         new Effect("Create Stone Sword", "create_stonesword"),
+         new Effect("Create Stone Axe", "create_stoneaxe"),
+         new Effect("Create Stone Shovel", "create_stoneshovel"),
+         new Effect("Create Diamond Pick Axe", "create_diamondpickaxe"),
+         new Effect("Create Diamond Sword", "create_diamondsword"),
+         new Effect("Create Diamond Axe", "create_diamondaxe"),
+         new Effect("Create Diamon Horse Armor", "create_diamondhorsearmor"),
+         new Effect("Create Diamon Shovel", "create_diamondshovel"),
+         new Effect("Create Ender Pearl", "create_enderpearl"),
     };
 }

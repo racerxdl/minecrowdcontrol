@@ -29,6 +29,7 @@ Features
 * Drop Selected Item
 * Repair Selected Item
 * Explode Player
+* Drop a item to the player (Create Item)
 
 Installing
 ==========

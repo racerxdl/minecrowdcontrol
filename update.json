@@ -1,10 +1,11 @@
 {
   "homepage": "https://github.com/racerxdl/minecrowdcontrol",
   "1.15.2": {
-    "1.0.0": "First Release! CrowdControl working"
+    "1.0.0": "First Release! CrowdControl working",
+    "1.0.1": "Add more spawn mobs and create items"
   },
   "promos": {
-    "1.15.2-latest": "1.0.0",
-    "1.15.2-recommended": "1.0.0"
+    "1.15.2-latest": "1.0.1",
+    "1.15.2-recommended": "1.0.1"
   }
 }
