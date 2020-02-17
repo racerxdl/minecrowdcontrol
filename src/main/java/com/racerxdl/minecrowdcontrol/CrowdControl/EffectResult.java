@@ -16,12 +16,11 @@ public enum EffectResult {
     @SerializedName("3")
     Retry (3);
 
-    public int v;
+    private int value;
     EffectResult(int v) {
-        this.v = v;
+        this.value = v;
     }
-
     public int getValue() {
-        return v;
+        return value;
     }
 }

@@ -18,6 +18,8 @@ public class Request {
 
     public String ToJSON() {
         GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(EffectResult.class, new IntEnumAdapter<EffectResult>());
+        builder.registerTypeAdapter(RequestType.class, new IntEnumAdapter<RequestType>());
         Gson gson = builder.create();
 
         return gson.toJson(this);
