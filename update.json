@@ -3,10 +3,11 @@
   "1.15.2": {
     "1.0.0": "First Release! CrowdControl working",
     "1.0.1": "Add more spawn mobs and create items",
-    "1.0.2": "Fixed Int Enum types being serialized as string causing refunds for coins"
+    "1.0.2": "Fixed Int Enum types being serialized as string causing refunds for coins",
+    "1.0.3": "Add drop all items when killing the player\nDisable 'send player to spawn point' when riding\nChange spawns: \n\tAdd following spawn mobs: Sheep, Villager, Fish, Wither, Slime, Silver Fish, Ravager, Phantom, Vex\n\tAdd following spawn items: Wood, Crafiting Table\nAdd difficult change effects"
   },
   "promos": {
-    "1.15.2-latest": "1.0.2",
-    "1.15.2-recommended": "1.0.2"
+    "1.15.2-latest": "1.0.3",
+    "1.15.2-recommended": "1.0.3"
   }
 }

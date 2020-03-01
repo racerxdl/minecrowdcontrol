@@ -19,6 +19,7 @@ import net.minecraft.util.FoodStats;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -72,15 +73,27 @@ public class Commands {
             EntityType.ZOMBIE,
             EntityType.COW,
             EntityType.CHICKEN,
-            EntityType.PIG
+            EntityType.PIG,
+            EntityType.SHEEP,
+            EntityType.VILLAGER,
+            EntityType.WITHER,
+            EntityType.SLIME,
+            EntityType.SILVERFISH,
+            EntityType.RAVAGER,
+            EntityType.PHANTOM,
+            EntityType.VEX,
+            EntityType.TROPICAL_FISH
     ));
 
     private static final List<Item> spawnItems = new ArrayList<>(Arrays.asList(
             Items.LEATHER,
             Items.STONE,
+            Items.OAK_WOOD,
             Items.IRON_INGOT,
             Items.GOLD_INGOT,
             Items.DIAMOND,
+
+            Items.CRAFTING_TABLE,
 
             Items.STONE_PICKAXE,
             Items.STONE_SWORD,
@@ -96,6 +109,13 @@ public class Commands {
             Items.DIAMOND_SHOVEL
     ));
 
+    private static final List<Difficulty> difficults = new ArrayList<>(Arrays.asList(
+            Difficulty.PEACEFUL,
+            Difficulty.EASY,
+            Difficulty.NORMAL,
+            Difficulty.HARD
+    ));
+
     static {
         spawnEntities.forEach((et) -> {
             String entityName = et.getName().getString().toUpperCase().replace(" ", "");
@@ -107,6 +127,12 @@ public class Commands {
             String itemName = item.getName().getString().toUpperCase().replace(" ", "");
             Log.info("Adding command CREATE_{}", itemName);
             CommandList.put("CREATE_" + itemName, (states, player, u1, server, viewer, type) -> SpawnItem(states, player, server, viewer, type, item));
+        });
+
+        difficults.forEach((diff) -> {
+            String diffName = diff.getDisplayName().getUnformattedComponentText().toUpperCase().replace(" ", "");
+            Log.info("Adding command SET_DIFFICULT_{}", diffName);
+            CommandList.put("SET_DIFFICULT_" + diffName, (states, player, u1, server, viewer, type) -> SetDifficult(states, player, server, viewer, type, diff));
         });
     }
 
@@ -140,6 +166,28 @@ public class Commands {
             return true;
         });
     }
+
+    public static CommandResult SetDifficult(PlayerStates states, PlayerEntity player, MinecraftServer server, String viewer, RequestType type, Difficulty diff) {
+        CommandResult res = new CommandResult(states);
+        if (type == RequestType.Test) {
+            return res.SetEffectResult(EffectResult.Success);
+        }
+
+        if (type == RequestType.Stop || player.getEntityWorld().getWorldInfo().getDifficulty() == diff) {
+            return res.SetEffectResult(EffectResult.Unavailable);
+        }
+
+        player.getEntityWorld().getWorldInfo().setDifficultyLocked(false);
+        player.getEntityWorld().getWorldInfo().setDifficulty(diff);
+        player.getEntityWorld().getWorldInfo().setDifficultyLocked(true);
+
+
+        Log.info(Messages.ServerSetDifficult, viewer, diff.getDisplayName().getUnformattedComponentText());
+        SendPlayerMessage(player, Messages.ClientSetDifficult, viewer, diff.getDisplayName().getUnformattedComponentText());
+
+        return res.SetEffectResult(EffectResult.Success);
+    }
+
 
     public static CommandResult SpawnItem(PlayerStates states, PlayerEntity p, MinecraftServer server, String viewer, RequestType type, Item item) {
         CommandResult res = new CommandResult(states);
@@ -196,7 +244,6 @@ public class Commands {
 
         if (result) {
             client.player.playSound(SoundEvents.ENTITY_ENDERMAN_SCREAM, 6, 0.25f);
-            Log.debug("WOLOLO");
             p.world.makeFireworks(p.getPosX(), p.getPosY(), p.getPosZ() + 20, 0, 0, 0, null);
             p.setMotion(2, 2, 2);
         }
@@ -496,6 +543,9 @@ public class Commands {
 
         boolean result = RunOnPlayers(server, (player) -> {
             if (player.getHealth() == 0) {
+                return false;
+            }
+            if (player.isPassenger()) {
                 return false;
             }
             BlockPos spawnPoint = player.getEntityWorld().getSpawnPoint();
@@ -815,6 +865,9 @@ public class Commands {
             float health = player.getHealth();
             if (health != 0) {
                 Log.info(Messages.ServerKill, viewer, player.getName().getString());
+                player.inventory.mainInventory.forEach(is -> player.dropItem(is, false));
+                player.inventory.offHandInventory.forEach(is -> player.dropItem(is, false));
+                player.inventory.armorInventory.forEach(is -> player.dropItem(is, false));
                 SendPlayerMessage(player, Messages.ClientKill, viewer);
                 player.setHealth(0);
                 return true;
