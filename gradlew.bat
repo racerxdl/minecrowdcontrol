@@ -16,7 +16,7 @@ set APP_HOME=%DIRNAME%
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=
 
-set JAVA_HOME="C:\Users\Lucas Teske\.IntelliJIdea2019.3\config\jdks\jbsdk8u112b287.2_windows_x64\jre"
+set JAVA_HOME="C:\Users\Lucas Teske\.IntelliJIdea2019.3\config\jdks\jbsdk8u202b1491_windows_x64\jre"
 
 
 @rem Find java.exe

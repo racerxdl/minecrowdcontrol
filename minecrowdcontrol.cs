@@ -54,7 +54,15 @@ public class Minecraft : SimpleTCPPack
         new Effect("Spawn Zombie", "spawn_zombie"),
         new Effect("Spawn Cow", "spawn_cow"),
         new Effect("Spawn Chicken", "spawn_chicken"),
-        new Effect("Spawn Pig", "spawn_pig"),
+        new Effect("Spawn Sheep", "spawn_sheep"),
+        new Effect("Spawn Villager", "spawn_villager"),
+        new Effect("Spawn Wither", "spawn_wither"),
+        new Effect("Spawn Slime", "spawn_slime"),
+        new Effect("Spawn Silver Fish", "spawn_silverfish"),
+        new Effect("Spawn Ravager", "spawn_ravager"),
+        new Effect("Spawn Phantom", "spawn_phantom"),
+        new Effect("Spawn Vex", "spawn_vex"),
+        new Effect("Spawn Fish", "spawn_tropicalfish"),
 
          new Effect("Create Leather", "create_leather"),
          new Effect("Create Stone", "create_stone"),
@@ -71,5 +79,10 @@ public class Minecraft : SimpleTCPPack
          new Effect("Create Diamon Horse Armor", "create_diamondhorsearmor"),
          new Effect("Create Diamon Shovel", "create_diamondshovel"),
          new Effect("Create Ender Pearl", "create_enderpearl"),
+
+         new Effect("Set Difficult to Peaceful", "set_difficult_peaceful"),
+         new Effect("Set Difficult to Easy", "set_difficult_easy"),
+         new Effect("Set Difficult to Normal", "set_difficult_normal"),
+         new Effect("Set Difficult to Hard", "set_difficult_hard"),
     };
 }

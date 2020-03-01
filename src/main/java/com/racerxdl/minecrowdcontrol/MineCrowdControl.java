@@ -36,6 +36,8 @@ public class MineCrowdControl {
         modconfig = new CrowdControlModConfig(modContainer);
         modContainer.addConfig(modconfig);
 
+        Log.debug("Config file: " + modconfig.getFileName());
+
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         // Register the doClientStuff method for modloading
