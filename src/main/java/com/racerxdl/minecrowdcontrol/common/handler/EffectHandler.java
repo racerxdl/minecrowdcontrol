@@ -1,8 +1,6 @@
 package com.racerxdl.minecrowdcontrol.common.handler;
 
-import com.racerxdl.minecrowdcontrol.common.effect.BaseEffect;
-import com.racerxdl.minecrowdcontrol.common.effect.EffectTest;
-import com.racerxdl.minecrowdcontrol.common.effect.HealthEffect;
+import com.racerxdl.minecrowdcontrol.common.effect.*;
 import com.racerxdl.minecrowdcontrol.common.effect.api.EffectContext;
 import com.racerxdl.minecrowdcontrol.common.effect.api.EffectStatus;
 import com.racerxdl.minecrowdcontrol.common.effect.api.IEffect;
@@ -19,6 +17,12 @@ public class EffectHandler
         registerEffect(new EffectTest());
         registerEffect(new HealthEffect("addhealth", HealthEffect.HealthMode.ADD));
         registerEffect(new HealthEffect("subtracthealth", HealthEffect.HealthMode.SUBTRACT));
+        registerEffect(new FirePlayerEffect("fireplayer"));
+        registerEffect(new TimeEffect("setday", TimeEffect.DayTimes.DAY));
+        registerEffect(new TimeEffect("setnoon", TimeEffect.DayTimes.NOON));
+        registerEffect(new TimeEffect("setnight", TimeEffect.DayTimes.NIGHT));
+        registerEffect(new FoodEffect("addfood", FoodEffect.FoodMode.ADD));
+        registerEffect(new FoodEffect("subtractfood", FoodEffect.FoodMode.ADD));
     }
 
     private void registerEffect(BaseEffect effect)
