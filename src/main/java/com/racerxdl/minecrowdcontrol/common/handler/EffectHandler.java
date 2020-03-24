@@ -19,6 +19,8 @@ public class EffectHandler
         registerEffect(new EffectTest());
         registerEffect(new HealthEffect("give_heart", HealthEffect.HealthMode.ADD));
         registerEffect(new HealthEffect("take_heart", HealthEffect.HealthMode.SUBTRACT));
+        registerEffect(new HealthEffect("take_all_hearts_but_half", HealthEffect.HealthMode.HALF));
+        registerEffect(new HealthEffect("fill_hearts", HealthEffect.HealthMode.FILL));
         registerEffect(new FirePlayerEffect("set_fire"));
         registerEffect(new TimeEffect("set_time_day", TimeEffect.DayTimes.DAY));
         registerEffect(new TimeEffect("set_time_noon", TimeEffect.DayTimes.NOON));
@@ -27,6 +29,8 @@ public class EffectHandler
         registerEffect(new FoodEffect("remove_food", FoodEffect.FoodMode.ADD));
         registerEffect(new KillPlayerEffect("kill"));
         Stream.of(SummonableEntities.values()).forEach(i->registerEffect(new SpawnEntityEffect("spawn_" + i.getName(), i)));
+        registerEffect(new SendPlayerToSpawnEffect("send_player_to_spawn_point"));
+
     }
 
     private void registerEffect(BaseEffect effect)

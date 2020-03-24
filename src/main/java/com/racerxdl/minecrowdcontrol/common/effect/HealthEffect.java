@@ -23,6 +23,8 @@ public class HealthEffect extends BaseEffect
         {
             case SUBTRACT: sub(player);
             case ADD: add(player);
+            case HALF: setHalf(player);
+            case FILL: setFull(player);
         }
 
         return false;
@@ -51,8 +53,20 @@ public class HealthEffect extends BaseEffect
         return false;
     }
 
-    public static enum HealthMode
+    private boolean setHalf(PlayerEntity player)
     {
-        ADD, SUBTRACT
+        player.setHealth(10);
+        return true;
+    }
+
+    private boolean setFull(PlayerEntity player)
+    {
+        player.setHealth(20);
+        return true;
+    }
+
+    public enum HealthMode
+    {
+        ADD, SUBTRACT, HALF, FILL
     }
 }
