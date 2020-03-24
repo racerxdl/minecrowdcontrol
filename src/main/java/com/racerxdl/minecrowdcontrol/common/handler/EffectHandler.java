@@ -1,12 +1,14 @@
 package com.racerxdl.minecrowdcontrol.common.handler;
 
 import com.racerxdl.minecrowdcontrol.common.effect.*;
+import com.racerxdl.minecrowdcontrol.common.effect.SpawnEntityEffect.SummonableEntities;
 import com.racerxdl.minecrowdcontrol.common.effect.api.EffectContext;
 import com.racerxdl.minecrowdcontrol.common.effect.api.EffectStatus;
 import com.racerxdl.minecrowdcontrol.common.effect.api.IEffect;
 import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.HashMap;
+import java.util.stream.Stream;
 
 public class EffectHandler
 {
@@ -23,6 +25,8 @@ public class EffectHandler
         registerEffect(new TimeEffect("set_time_night", TimeEffect.DayTimes.NIGHT));
         registerEffect(new FoodEffect("give_food", FoodEffect.FoodMode.ADD));
         registerEffect(new FoodEffect("remove_food", FoodEffect.FoodMode.ADD));
+        registerEffect(new KillPlayerEffect("kill"));
+        Stream.of(SummonableEntities.values()).forEach(i->registerEffect(new SpawnEntityEffect("spawn_" + i.getName(), i)));
     }
 
     private void registerEffect(BaseEffect effect)
