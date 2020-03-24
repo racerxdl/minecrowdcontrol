@@ -15,14 +15,14 @@ public class EffectHandler
     public EffectHandler()
     {
         registerEffect(new EffectTest());
-        registerEffect(new HealthEffect("addhealth", HealthEffect.HealthMode.ADD));
-        registerEffect(new HealthEffect("subtracthealth", HealthEffect.HealthMode.SUBTRACT));
-        registerEffect(new FirePlayerEffect("fireplayer"));
-        registerEffect(new TimeEffect("setday", TimeEffect.DayTimes.DAY));
-        registerEffect(new TimeEffect("setnoon", TimeEffect.DayTimes.NOON));
-        registerEffect(new TimeEffect("setnight", TimeEffect.DayTimes.NIGHT));
-        registerEffect(new FoodEffect("addfood", FoodEffect.FoodMode.ADD));
-        registerEffect(new FoodEffect("subtractfood", FoodEffect.FoodMode.ADD));
+        registerEffect(new HealthEffect("give_heart", HealthEffect.HealthMode.ADD));
+        registerEffect(new HealthEffect("take_heart", HealthEffect.HealthMode.SUBTRACT));
+        registerEffect(new FirePlayerEffect("set_fire"));
+        registerEffect(new TimeEffect("set_time_day", TimeEffect.DayTimes.DAY));
+        registerEffect(new TimeEffect("set_time_noon", TimeEffect.DayTimes.NOON));
+        registerEffect(new TimeEffect("set_time_night", TimeEffect.DayTimes.NIGHT));
+        registerEffect(new FoodEffect("give_food", FoodEffect.FoodMode.ADD));
+        registerEffect(new FoodEffect("remove_food", FoodEffect.FoodMode.ADD));
     }
 
     private void registerEffect(BaseEffect effect)
