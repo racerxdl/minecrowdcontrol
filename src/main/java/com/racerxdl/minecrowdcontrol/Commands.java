@@ -3,7 +3,6 @@ package com.racerxdl.minecrowdcontrol;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.racerxdl.minecrowdcontrol.CrowdControl.EffectResult;
 import com.racerxdl.minecrowdcontrol.CrowdControl.RequestType;
-import javafx.scene.effect.Effect;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.impl.DifficultyCommand;
