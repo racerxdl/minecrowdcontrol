@@ -2,7 +2,7 @@ package com.racerxdl.minecrowdcontrol;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -77,7 +77,7 @@ public class MineCrowdControl {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onJump(LivingEvent.LivingJumpEvent event) {
         if (cs.GetStates().getJumpDisabled()) {
-            Vec3d motion = event.getEntity().getMotion();
+            Vector3d motion = event.getEntity().getMotion();
             event.getEntity().setMotion(motion.getX(), 0, motion.getZ());
         }
     }

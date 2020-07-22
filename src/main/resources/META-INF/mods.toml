@@ -47,6 +47,6 @@ This mod integrates with CrowdControl so you can stream at twitch and give crowd
 [[dependencies.minecrowdcontrol]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.15.2]"
+    versionRange="[1.16.1]"
     ordering="NONE"
     side="BOTH"
