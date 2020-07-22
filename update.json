@@ -6,8 +6,13 @@
     "1.0.2": "Fixed Int Enum types being serialized as string causing refunds for coins",
     "1.0.3": "Add drop all items when killing the player\nDisable 'send player to spawn point' when riding\nChange spawns: \n\tAdd following spawn mobs: Sheep, Villager, Fish, Wither, Slime, Silver Fish, Ravager, Phantom, Vex\n\tAdd following spawn items: Wood, Crafiting Table\nAdd difficult change effects"
   },
+  "1.16.1": {
+    "1.0.4": "Made it work 1.16\nFixed bug on Spawn Point inside Nether\nAdd Nausea Effect to Drunk Mode"
+  },
   "promos": {
     "1.15.2-latest": "1.0.3",
-    "1.15.2-recommended": "1.0.3"
+    "1.15.2-recommended": "1.0.3",
+    "1.16.1-latest": "1.0.4",
+    "1.16.1-recommended": "1.0.4"
   }
 }
