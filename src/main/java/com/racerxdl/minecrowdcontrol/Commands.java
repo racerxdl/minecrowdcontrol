@@ -561,7 +561,7 @@ public class Commands {
                     return false;
                 }
                 ServerWorld world = server.getWorlds().iterator().next();
-                if (world.func_230315_m_() != player.getEntityWorld().func_230315_m_()) {
+                if (world.getDimensionType() != player.getEntityWorld().getDimensionType()) {
                     player.changeDimension(world, world.getDefaultTeleporter());
                 }
                 player.setPositionAndUpdate(spawnPoint.getX(), spawnPoint.getY()+1, spawnPoint.getZ());
